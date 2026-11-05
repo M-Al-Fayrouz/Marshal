@@ -7,8 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <!-- مكتبة Supabase -->
+    <!-- مكتبة كاميرا الـ QR المعتمدة -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- مكتبة Supabase السحابية -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -26,12 +27,12 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
-                    <p class="text-[11px] text-slate-400">ماسح الـ QR والتحكم الكامل بالمنيو (سحابياً)</p>
+                    <p class="text-[11px] text-slate-400">ماسح الـ QR والتحكم الكامل بالمنيو</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والماسح</button>
-                <button onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300">إدارة المنيو</button>
+                <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والماسح</button>
+                <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300">إدارة المنيو</button>
             </nav>
         </div>
     </header>
@@ -56,13 +57,13 @@
                     <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح الـ QR بالكاميرا</h2>
                     <p class="text-xs text-slate-500">وجه الكاميرا نحو كود الطالب لتسليم الطلب فوراً:</p>
                     <div id="reader" class="w-full rounded-xl overflow-hidden border bg-slate-950 min-h-[240px]"></div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاهزة للعمل...</div>
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاري تشغيلها...</div>
                 </div>
 
                 <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center justify-between">
                         <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة (تحديث لحظي)</span>
-                        <button onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                        <button type="button" onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold"><i class="fa-solid fa-rotate"></i> تحديث</button>
                     </h2>
                     <div id="kitchen-orders-list" class="space-y-3 max-h-[480px] overflow-y-auto">
                         <p class="text-center text-slate-400 text-xs py-8">جاري التحميل...</p>
@@ -79,7 +80,7 @@
                     <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: شاورما فراخ)" class="text-xs p-2.5 rounded-xl border outline-none">
                     <input type="number" id="p-price" placeholder="السعر (بالجنيه)" class="text-xs p-2.5 rounded-xl border outline-none">
                     <input type="text" id="p-image" placeholder="رابط صورة الوجبة (Image URL)" class="text-xs p-2.5 rounded-xl border outline-none">
-                    <button onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow">إضافة للمنيو فوراً</button>
+                    <button type="button" onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow">إضافة للمنيو فوراً</button>
                 </div>
             </div>
 
@@ -101,22 +102,22 @@
         let productsList = [];
         let orders = [];
         let html5QrCode = null;
-        let isScanningActive = false;
+        let isScannerRunning = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
-            initQrScanner();
+            startScanner();
 
             // الاستماع للطلبات الجديدة لحظياً (Realtime)
             supabase.channel('public:orders')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
                     fetchAllOrders();
                 })
                 .subscribe();
         });
 
-        // دالة تبديل الشاشات المصححة والمضمونة 100%
+        // تبديل الشاشات المنضبط
         function switchView(view) {
             const ordersView = document.getElementById('view-orders');
             const menuView = document.getElementById('view-menu-manager');
@@ -128,37 +129,45 @@
                 menuView.classList.add('hidden');
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white";
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-                setTimeout(initQrScanner, 300);
+                setTimeout(startScanner, 200);
             } else if (view === 'menu-manager') {
                 ordersView.classList.add('hidden');
                 menuView.classList.remove('hidden');
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white";
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-                stopQrScanner();
-                fetchAdminProducts(); // تحديث القائمة فور فتحها
+                stopScanner();
+                fetchAdminProducts();
             }
         }
 
-        function initQrScanner() {
-            if (isScanningActive) return;
-            const readerDiv = document.getElementById('reader');
-            if (!readerDiv) return;
+        // تشغيل الكاميرا بدون شاشة سوداء
+        function startScanner() {
+            if (isScannerRunning) return;
+            const readerElement = document.getElementById('reader');
+            if (!readerElement) return;
 
             html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 15, qrbox: { width: 200, height: 200 } };
-
             html5QrCode.start(
-                { facingMode: "environment" }, 
-                config,
-                (decodedText) => { handleScannedOrder(decodedText.trim()); },
-                (err) => {}
-            ).then(() => { isScanningActive = true; })
-             .catch(err => { document.getElementById('scan-feedback').innerText = "⚠️ يرجى منح إذن الكاميرا للمتصفح"; });
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
+                (decodedText) => {
+                    handleScannedOrder(decodedText.trim());
+                },
+                (error) => {}
+            ).then(() => {
+                isScannerRunning = true;
+                document.getElementById('scan-feedback').innerText = "الكاميرا جاهزة وقيد العمل...";
+            }).catch(err => {
+                console.error(err);
+                document.getElementById('scan-feedback').innerText = "⚠️ يرجى السماح للمتصفح بالوصول للكاميرا";
+            });
         }
 
-        function stopQrScanner() {
-            if (html5QrCode && isScanningActive) {
-                html5QrCode.stop().then(() => { isScanningActive = false; }).catch(err => console.log(err));
+        function stopScanner() {
+            if (html5QrCode && isScannerRunning) {
+                html5QrCode.stop().then(() => {
+                    isScannerRunning = false;
+                }).catch(err => console.log(err));
             }
         }
 
@@ -183,7 +192,7 @@
 
             setTimeout(() => {
                 feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700";
-                feedback.innerText = "الكاميرا جاهزة للعمل...";
+                feedback.innerText = "الكاميرا جاهزة وقيد العمل...";
             }, 4000);
         }
 
@@ -217,7 +226,7 @@
 
                     <div class="flex items-center gap-2">
                         ${o.status === 'pending_pickup' ? `
-                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
+                            <button type="button" onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
                                 <i class="fa-solid fa-check ml-1"></i> تسليم يدوي
                             </button>
                         ` : ''}
@@ -248,7 +257,7 @@
                             <p class="text-amber-600 font-bold text-xs">${p.price} ج.م</p>
                         </div>
                     </div>
-                    <button onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold"><i class="fa-solid fa-trash"></i></button>
+                    <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
         }
@@ -267,13 +276,13 @@
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
             }]);
 
-            if(error) { alert('خطأ أثناء إضافة المنتج، تأكد من وجود جدول products في Supabase.'); return; }
+            if(error) { alert('خطأ أثناء إضافة المنتج، تأكد من جدول products.'); return; }
 
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
             document.getElementById('p-image').value = '';
             fetchAdminProducts();
-            alert('✅ تم إضافة المنتج للمنيو بنجاح وسُمِع عند الطلاب فوراً!');
+            alert('✅ تم إضافة المنتج للمنيو بنجاح!');
         }
 
         async function deleteProduct(id) {
@@ -291,4 +300,5 @@
     </script>
 </body>
 </html>
+
 
