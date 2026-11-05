@@ -3,453 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الكاشير الذكية | Enterprise POS</title>
-    <!-- Tailwind CSS -->
+    <title>لوحة تحكم الكاشير والإدارة | Kitchen POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts: Tajawal -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <!-- QR Code Scanner Library -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- Supabase Client -->
+    <!-- مكتبة الـ QR المعتمدة -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         * { font-family: 'Tajawal', sans-serif; }
-        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
-    <!-- Top Navigation Bar -->
-    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center font-black text-2xl shadow-lg shadow-amber-500/20">
-                    <i class="fa-solid fa-store"></i>
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl shadow">
+                    <i class="fa-solid fa-cash-register"></i>
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-base tracking-wide text-white">نظام إدارة الكافتيريا المركزية</h1>
-                    <p class="text-xs text-slate-400">الإصدار الاحترافي المرتبط بالسحابة (Supabase Realtime)</p>
+                    <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
+                    <p class="text-[11px] text-slate-400">إدارة المنيو بالكامل ومسح الـ QR للاستلام</p>
                 </div>
             </div>
-
-            <nav class="flex items-center gap-2 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-800">
-                <button type="button" onclick="switchTab('orders')" id="nav-orders" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition-all shadow-md cursor-pointer flex items-center gap-2">
-                    <i class="fa-solid fa-qrcode"></i> الطلبات والماسح
-                </button>
-                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-4 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-all cursor-pointer flex items-center gap-2">
-                    <i class="fa-solid fa-burger"></i> إدارة المنيو
-                </button>
-                <button type="button" onclick="switchTab('history')" id="nav-history" class="px-4 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-all cursor-pointer flex items-center gap-2">
-                    <i class="fa-solid fa-clock-rotate-left"></i> سجل الطلبات والمبيعات
-                </button>
+            <nav class="flex items-center gap-2">
+                <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow">الطلبات والماسح</button>
+                <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow">إضافة وتعديل المنيو</button>
             </nav>
         </div>
     </header>
 
-    <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-        <!-- ================= SECTION 1: ORDERS & SCANNER ================= -->
-        <section id="section-orders" class="space-y-6">
-            <!-- Analytics Quick Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="glass-card p-5 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-400 font-bold">مبيعات اليوم</p>
-                        <h3 id="stat-daily-sales" class="text-2xl font-black text-emerald-400 mt-1">0 ج.م</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-wallet"></i>
-                    </div>
+        <!-- VIEW 1: ORDERS & SCANNER -->
+        <div id="view-orders" class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
+                    <div><p class="text-xs text-slate-500 font-bold">إجمالي مبيعات اليوم</p><h3 id="sales-amount" class="text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3></div>
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-wallet"></i></div>
                 </div>
-                <div class="glass-card p-5 rounded-2xl border-l-4 border-indigo-500 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-400 font-bold">إجمالي مبيعات السنة</p>
-                        <h3 id="stat-yearly-sales" class="text-2xl font-black text-indigo-400 mt-1">0 ج.م</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </div>
-                </div>
-                <div class="glass-card p-5 rounded-2xl border-l-4 border-amber-500 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-400 font-bold">الطلبات النشطة (بانتظار الاستلام)</p>
-                        <h3 id="stat-active-orders" class="text-2xl font-black text-amber-400 mt-1">0 طلب</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-bell"></i>
-                    </div>
+                <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-indigo-500 flex items-center justify-between">
+                    <div><p class="text-xs text-slate-500 font-bold">الطلبات المسلمة</p><h3 id="completed-count" class="text-2xl font-black text-indigo-600 mt-1">0 طلب</h3></div>
+                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-check-double"></i></div>
                 </div>
             </div>
 
-            <!-- Workspace Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- QR Scanner Panel -->
-                <div class="glass-panel p-5 rounded-3xl space-y-4 shadow-xl">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h2 class="font-bold text-sm flex items-center gap-2 text-white">
-                            <i class="fa-solid fa-camera-rotate text-indigo-400"></i> ماسح الكاميرا الذكي
-                        </h2>
-                        <span id="cam-status-dot" class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-                    </div>
-                    <p class="text-xs text-slate-400">وجه الكاميرا نحو كود الطالب، أو استخدم الإدخال اليدوي السريع:</p>
-
-                    <div id="reader" class="w-full rounded-2xl overflow-hidden border border-slate-800 bg-black min-h-[220px]"></div>
-
-                    <div class="flex gap-2">
-                        <button type="button" onclick="startCamera()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition cursor-pointer">
-                            <i class="fa-solid fa-play ml-1"></i> تشغيل الكاميرا
-                        </button>
-                        <button type="button" onclick="stopCamera()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-3 rounded-xl transition cursor-pointer">
-                            إيقاف
-                        </button>
-                    </div>
-
-                    <div class="pt-2 border-t border-slate-800 flex gap-2">
-                        <input type="text" id="manual-code" placeholder="أدخل رقم الأوردر يدويّاً (مثل: ORD-...)" class="text-xs p-3 rounded-xl bg-slate-900 border border-slate-800 flex-1 uppercase outline-none font-bold text-white focus:border-indigo-500 transition">
-                        <button type="button" onclick="processManualFulfillment()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-3 rounded-xl transition cursor-pointer shadow-lg shadow-emerald-600/20">تسليم</button>
-                    </div>
-
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-3 rounded-xl bg-slate-900 text-slate-300 border border-slate-800">
-                        النظام جاهز ومستعد للمسح...
-                    </div>
+                <!-- Camera Scanner -->
+                <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
+                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا لتسليم الطلب</h2>
+                    <p class="text-xs text-slate-500">صوّر كود الـ QR الخاص بالطالب عند وصوله للكاونتر لإتمام التسليم:</p>
+                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px]"></div>
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">جاري تفعيل الكاميرا...</div>
                 </div>
 
-                <!-- Live Orders Feed -->
-                <div class="lg:col-span-2 glass-panel p-5 rounded-3xl space-y-4 shadow-xl">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h2 class="font-bold text-sm flex items-center gap-2 text-white">
-                            <i class="fa-solid fa-list-check text-amber-400"></i> الطلبات الواردة لحظياً
-                        </h2>
-                        <button type="button" onclick="fetchAllData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer">
-                            <i class="fa-solid fa-rotate ml-1"></i> تحديث
-                        </button>
-                    </div>
-
-                    <div id="kitchen-orders-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                        <p class="text-center text-slate-500 text-xs py-12">جاري جلب الطلبات السحابية...</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= SECTION 2: MENU MANAGER ================= -->
-        <section id="section-menu" class="space-y-6" style="display: none;">
-            <div class="glass-panel p-6 rounded-3xl space-y-4 shadow-xl">
-                <h2 class="font-bold text-base flex items-center gap-2 border-b border-slate-800 pb-3 text-white">
-                    <i class="fa-solid fa-circle-plus text-amber-400"></i> إضافة وجبة جديدة إلى المنيو السحابي
-                </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
-                    <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: برجر دبل تشيز)" class="text-xs p-3 rounded-xl bg-slate-900 border border-slate-800 outline-none text-white focus:border-amber-500 transition">
-                    <input type="number" id="p-price" placeholder="السعر (بالجنيه المصري)" class="text-xs p-3 rounded-xl bg-slate-900 border border-slate-800 outline-none text-white focus:border-amber-500 transition">
-                    <input type="text" id="p-image" placeholder="رابط صورة الوجبة (Image URL)" class="text-xs p-3 rounded-xl bg-slate-900 border border-slate-800 outline-none text-white focus:border-amber-500 transition">
-                    <button type="button" onclick="addNewProduct()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs p-3 rounded-xl shadow-lg shadow-emerald-600/20 transition cursor-pointer">
-                        إضافة للمنيو فوراً
-                    </button>
-                </div>
-            </div>
-
-            <div class="glass-panel p-6 rounded-3xl space-y-4 shadow-xl">
-                <h2 class="font-bold text-base text-white">وجبات المنيو المعروضة حالياً للطلاب</h2>
-                <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <p class="text-slate-500 text-xs py-8 col-span-3 text-center">جاري تحميل المنتجات...</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= SECTION 3: HISTORY & SALES LOG ================= -->
-        <section id="section-history" class="space-y-6" style="display: none;">
-            <div class="glass-panel p-6 rounded-3xl space-y-4 shadow-xl">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h2 class="font-bold text-base flex items-center gap-2 text-white">
-                        <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> سجل الطلبات الكاملة (من تم تسليمهم ومن لم يستلم)
+                <!-- Orders List -->
+                <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
+                    <h2 class="font-bold text-base flex items-center justify-between">
+                        <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة لحظياً</span>
+                        <button type="button" onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> تحديث</button>
                     </h2>
-                    <span id="history-count" class="bg-indigo-500/10 text-indigo-400 text-xs font-bold px-3 py-1 rounded-full border border-indigo-500/20">0 طلب إجمالي</span>
-                </div>
-
-                <div id="full-history-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                    <p class="text-center text-slate-500 text-xs py-12">جاري جلب السجل التاريخي...</p>
+                    <div id="kitchen-orders-list" class="space-y-3 max-h-[480px] overflow-y-auto">
+                        <p class="text-center text-slate-400 text-xs py-8">جاري التحميل...</p>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <!-- VIEW 2: MENU & PRODUCTS MANAGER -->
+        <div id="view-menu-manager" class="hidden space-y-6">
+            <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
+                <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+                    <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: شاورما فراخ)" class="text-xs p-2.5 rounded-xl border outline-none bg-white text-slate-900">
+                    <input type="number" id="p-price" placeholder="السعر (بالجنيه)" class="text-xs p-2.5 rounded-xl border outline-none bg-white text-slate-900">
+                    <input type="text" id="p-image" placeholder="رابط صورة الوجبة (Image URL)" class="text-xs p-2.5 rounded-xl border outline-none bg-white text-slate-900">
+                    <button type="button" onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow cursor-pointer">إضافة للمنيو فوراً</button>
+                </div>
+            </div>
+
+            <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
+                <h2 class="font-bold text-lg">المنتجات المعروضة حالياً في المنيو</h2>
+                <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <p class="text-slate-400 text-xs py-6">لا توجد منتجات مضافة بعد.</p>
+                </div>
+            </div>
+        </div>
 
     </main>
 
-    <!-- Application Script Engine -->
     <script>
-        // Supabase Configuration Keys
         const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let ordersCache = [];
-        let productsCache = [];
-        let html5QrCode = null;
-        let isCameraActive = false;
+        let productsList = [];
+        let orders = [];
+        let html5QrcodeScanner = null;
+        let lastScanned = "";
+        let cooldown = false;
 
-        // Initialization on Load
         window.addEventListener('DOMContentLoaded', () => {
-            fetchAllData();
+            fetchAllOrders();
+            fetchAdminProducts();
+            initScanner();
 
-            // Realtime subscription for instant orders sync
+            // تحديث لحظي للأوردرات سحابياً
             supabase.channel('public:orders')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-                    fetchAllData();
+                    fetchAllOrders();
                 })
                 .subscribe();
         });
 
-        // Tab Switcher Controller
-        function switchTab(tab) {
-            const secOrders = document.getElementById('section-orders');
-            const secMenu = document.getElementById('section-menu');
-            const secHistory = document.getElementById('section-history');
-            const navOrders = document.getElementById('nav-orders');
-            const navMenu = document.getElementById('nav-menu');
-            const navHistory = document.getElementById('nav-history');
+        // دالة تبديل الشاشات المباشرة والموثوقة للأزرار العليا
+        function switchView(view) {
+            const ordersView = document.getElementById('view-orders');
+            const menuView = document.getElementById('view-menu-manager');
+            const btnOrders = document.getElementById('btn-orders');
+            const btnMenu = document.getElementById('btn-menu');
 
-            // Reset all
-            secOrders.style.display = 'none';
-            secMenu.style.display = 'none';
-            secHistory.style.display = 'none';
-            navOrders.className = "px-4 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-all cursor-pointer flex items-center gap-2";
-            navMenu.className = "px-4 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-all cursor-pointer flex items-center gap-2";
-            navHistory.className = "px-4 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-all cursor-pointer flex items-center gap-2";
-
-            if (tab === 'orders') {
-                secOrders.style.display = 'block';
-                navOrders.className = "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition-all shadow-md cursor-pointer flex items-center gap-2";
-            } else if (tab === 'menu') {
-                secMenu.style.display = 'block';
-                navMenu.className = "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition-all shadow-md cursor-pointer flex items-center gap-2";
-                stopCamera();
+            if (view === 'orders') {
+                ordersView.classList.remove('hidden');
+                menuView.classList.add('hidden');
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
+                setTimeout(initScanner, 200);
+            } else if (view === 'menu-manager') {
+                ordersView.classList.add('hidden');
+                menuView.classList.remove('hidden');
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
+                
+                if (html5QrcodeScanner) {
+                    try { html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
+                }
                 fetchAdminProducts();
-            } else if (tab === 'history') {
-                secHistory.style.display = 'block';
-                navHistory.className = "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white transition-all shadow-md cursor-pointer flex items-center gap-2";
-                stopCamera();
-                renderFullHistory();
             }
         }
 
-        // Fetch All Database Data
-        async function fetchAllData() {
-            const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-            if (!error) {
-                ordersCache = data || [];
-                renderActiveOrders();
-                calculateSalesStats();
-            }
-            fetchAdminProducts();
+        async function fetchAllOrders() {
+            const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+            orders = data || [];
+            renderKitchenOrders();
+            updateSalesStats();
         }
 
-        // Calculate Analytics & Revenue Statistics
-        function calculateSalesStats() {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const todayStr = now.toISOString().split('T')[0];
-
-            let dailyTotal = 0;
-            let yearlyTotal = 0;
-            let activeCount = 0;
-
-            ordersCache.forEach(o => {
-                const orderDate = new Date(o.created_at);
-                const orderDateStr = orderDate.toISOString().split('T')[0];
-                const orderYear = orderDate.getFullYear();
-
-                if (o.status === 'completed') {
-                    if (orderDateStr === todayStr) dailyTotal += Number(o.total || 0);
-                    if (orderYear === currentYear) yearlyTotal += Number(o.total || 0);
-                }
-
-                if (o.status === 'pending_pickup') {
-                    activeCount++;
-                }
-            });
-
-            document.getElementById('stat-daily-sales').innerText = `${dailyTotal.toLocaleString()} ج.م`;
-            document.getElementById('stat-yearly-sales').innerText = `${yearlyTotal.toLocaleString()} ج.م`;
-            document.getElementById('stat-active-orders').innerText = `${activeCount} طلب`;
-        }
-
-        // Render Active Orders for Kitchen
-        function renderActiveOrders() {
-            const container = document.getElementById('kitchen-orders-list');
-            const pendingOrders = ordersCache.filter(o => o.status === 'pending_pickup');
-
-            if (pendingOrders.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-500 text-xs py-12">لا توجد طلبات معلقة بانتظار الاستلام حالياً ✨</p>`;
-                return;
-            }
-
-            container.innerHTML = pendingOrders.map(o => `
-                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="font-black text-sm text-amber-400">#${o.id}</span>
-                            <span class="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">🟡 بانتظار مسح الـ QR</span>
-                        </div>
-                        <p class="text-xs font-bold text-white">الطالب: ${o.student_name} | الهاتف: <span class="text-indigo-400">${o.student_phone}</span></p>
-                        <p class="text-xs text-slate-400">الوجبات: ${o.items.map(i => `${i.name} (×${i.qty})`).join(', ')}</p>
-                        <p class="text-xs font-black text-emerald-400">الإجمالي: ${o.total} ج.م</p>
-                    </div>
-
-                    <button type="button" onclick="completeOrder('${o.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-md cursor-pointer flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-check"></i> تسليم فوري
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        // Render Full History Tab (All orders with buyer names and statuses)
-        function renderFullHistory() {
-            const container = document.getElementById('full-history-list');
-            document.getElementById('history-count').innerText = `${ordersCache.length} طلب إجمالي`;
-
-            if (ordersCache.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-500 text-xs py-12">لا يوجد سجل طلبات سابق حتى الآن.</p>`;
-                return;
-            }
-
-            container.innerHTML = ordersCache.map(o => {
-                const dateFormatted = new Date(o.created_at).toLocaleString('ar-EG');
-                const isCompleted = o.status === 'completed';
-                return `
-                    <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-2">
-                                <span class="font-black text-sm text-white">#${o.id}</span>
-                                <span class="text-[11px] px-2.5 py-0.5 rounded-full font-bold ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
-                                    ${isCompleted ? '✅ تم الاستلام بنجاح' : '🟡 بانتظار العميل'}
-                                </span>
-                                <span class="text-[11px] text-slate-500">${dateFormatted}</span>
-                            </div>
-                            <p class="text-xs font-bold text-slate-300">اسم الطالب: <span class="text-white">${o.student_name}</span> | هاتف: <span class="text-indigo-400">${o.student_phone}</span></p>
-                            <p class="text-xs text-slate-400">المحتويات: ${o.items.map(i => `${i.name} (×${i.qty})`).join(', ')}</p>
-                            <p class="text-xs font-black text-amber-400">الإجمالي: ${o.total} ج.م</p>
-                        </div>
-                        ${!isCompleted ? `
-                            <button type="button" onclick="completeOrder('${o.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition cursor-pointer">
-                                تسليم يدوي
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Complete Order Function
-        async function completeOrder(orderId) {
-            const { error } = await supabase.from('orders').update({ status: 'completed' }).eq('id', orderId);
-            if (!error) {
-                fetchAllData();
-            } else {
-                alert('حدث خطأ أثناء تحديث حالة الطلب.');
-            }
-        }
-
-        // QR Camera Scanner Setup
-        function startCamera() {
-            if (isCameraActive) return;
-            const readerEl = document.getElementById('reader');
-            if (!readerEl) return;
-
-            html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 200, height: 200 } },
-                (decodedText) => {
-                    handleScannedCode(decodedText.trim());
-                },
-                (err) => {}
-            ).then(() => {
-                isCameraActive = true;
-                document.getElementById('cam-status-dot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50";
-                setFeedback("📷 الكاميرا تعمل الآن بانتظار مسح كود الـ QR...", "success");
-            }).catch(err => {
-                setFeedback("⚠️ يرجى السماح للمتصفح بالوصول للكاميرا من إعدادات الأمان.", "error");
-            });
-        }
-
-        function stopCamera() {
-            if (html5QrCode && isCameraActive) {
-                html5QrCode.stop().then(() => {
-                    isCameraActive = false;
-                    document.getElementById('cam-status-dot').className = "w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse";
-                    document.getElementById('reader').innerHTML = "";
-                    setFeedback("تم إيقاف الكاميرا مؤقتاً.", "normal");
-                }).catch(() => { isCameraActive = false; });
-            }
-        }
-
-        async function handleScannedCode(code) {
-            await executeFulfillment(code);
-        }
-
-        async function processManualFulfillment() {
-            const input = document.getElementById('manual-code');
-            const code = input.value.trim();
-            if (!code) { alert('برجاء إدخال رقم الأوردر.'); return; }
-            await executeFulfillment(code);
-            input.value = '';
-        }
-
-        async function executeFulfillment(code) {
-            const { data, error } = await supabase.from('orders').select('*').ilike('id', code).single();
-
-            if (data && !error) {
-                if (data.status === 'pending_pickup') {
-                    await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
-                    fetchAllData();
-                    setFeedback(`✅ تم تسليم الطلب (${data.id}) للطالب ${data.student_name} بنجاح!`, "success");
-                } else {
-                    setFeedback(`ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً بالفعل!`, "info");
-                }
-            } else {
-                setFeedback(`❌ كود QR غير صحيح أو غير موجود بالنظام: (${code})`, "error");
-            }
-        }
-
-        function setFeedback(msg, type) {
-            const fb = document.getElementById('scan-feedback');
-            fb.innerText = msg;
-            if (type === 'success') fb.className = "text-center text-xs font-bold py-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-            else if (type === 'error') fb.className = "text-center text-xs font-bold py-3 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30";
-            else if (type === 'info') fb.className = "text-center text-xs font-bold py-3 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
-            else fb.className = "text-center text-xs font-bold py-3 rounded-xl bg-slate-900 text-slate-300 border border-slate-800";
-        }
-
-        // Menu Management Operations
         async function fetchAdminProducts() {
             const { data } = await supabase.from('products').select('*');
-            productsCache = data || [];
+            productsList = data || [];
             const list = document.getElementById('admin-products-list');
-            
-            if (productsCache.length === 0) {
-                list.innerHTML = `<p class="text-slate-500 text-xs py-8 col-span-3 text-center">لا توجد منتجات مضافة حالياً.</p>`;
+            if (productsList.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. قم بإضافة منتجاتك من الأعلى.</p>`;
                 return;
             }
-
-            list.innerHTML = productsCache.map(p => `
-                <div class="glass-card p-3.5 rounded-2xl flex items-center justify-between border border-slate-800">
+            list.innerHTML = productsList.map(p => `
+                <div class="bg-slate-50 p-3 rounded-xl border flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-12 h-12 object-cover rounded-xl border border-slate-700">
+                        <img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-12 h-12 object-cover rounded-lg">
                         <div>
-                            <p class="font-bold text-xs text-white">${p.name}</p>
-                            <p class="text-amber-400 font-extrabold text-xs mt-0.5">${p.price} ج.م</p>
+                            <p class="font-bold text-xs text-slate-900">${p.name}</p>
+                            <p class="text-amber-600 font-bold text-xs">${p.price} ج.م</p>
                         </div>
                     </div>
-                    <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+                    <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
         }
@@ -459,7 +180,7 @@
             const price = parseFloat(document.getElementById('p-price').value);
             const image_url = document.getElementById('p-image').value.trim();
 
-            if (!name || isNaN(price)) { alert('برجاء كتابة اسم الوجبة والسعر بشكل صحيح.'); return; }
+            if (!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره الصحيح.'); return; }
 
             const { error } = await supabase.from('products').insert([{
                 name: name,
@@ -468,19 +189,98 @@
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
             }]);
 
-            if (error) { alert('خطأ أثناء حفظ المنتج في قاعدة البيانات.'); return; }
+            if (error) { alert('خطأ أثناء إضافة المنتج لقاعدة البيانات.'); return; }
 
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
             document.getElementById('p-image').value = '';
             fetchAdminProducts();
-            alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً للطلاب في المنيو فورا!');
+            alert('✅ تم إضافة المنتج للمنيو بنجاح وأصبح ظاهراً للطلاب فوراً!');
         }
 
         async function deleteProduct(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا المنتج من المنيو؟')) return;
+            if (!confirm('حذف هذا المنتج من المنيو؟')) return;
             await supabase.from('products').delete().eq('id', id);
             fetchAdminProducts();
+        }
+
+        function renderKitchenOrders() {
+            const container = document.getElementById('kitchen-orders-list');
+            if (orders.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-6">لا توجد طلبات واردة حالياً</p>`;
+                return;
+            }
+
+            container.innerHTML = orders.map(o => `
+                <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-black text-sm text-slate-900">#${o.id}</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${
+                                o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار وصول الطالب والمسح' : '✅ تم الاستلام بنجاح'}</span>
+                        </div>
+                        <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
+                        <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
+                        <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        ${o.status === 'pending_pickup' ? `
+                            <button type="button" onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow cursor-pointer">
+                                <i class="fa-solid fa-check ml-1"></i> تسليم يدوي
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function manualComplete(orderId) {
+            await supabase.from('orders').update({ status: 'completed' }).eq('id', orderId);
+            fetchAllOrders();
+        }
+
+        function updateSalesStats() {
+            const completed = orders.filter(o => o.status === 'completed');
+            const revenue = completed.reduce((sum, o) => sum + Number(o.total), 0);
+            document.getElementById('sales-amount').innerText = `${revenue} ج.م`;
+            document.getElementById('completed-count').innerText = `${completed.length} طلب`;
+        }
+
+        function initScanner() {
+            if (html5QrcodeScanner) return;
+            const readerEl = document.getElementById('reader');
+            if (!readerEl) return;
+
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
+            html5QrcodeScanner.render((code) => {
+                if (cooldown || code === lastScanned) return;
+                cooldown = true; lastScanned = code.trim();
+                handleScannedOrder(lastScanned);
+            }, () => {});
+        }
+
+        async function handleScannedOrder(code) {
+            const feedback = document.getElementById('scan-feedback');
+            const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
+
+            if (data) {
+                if (data.status === 'pending_pickup') {
+                    await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
+                    fetchAllOrders();
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
+                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${data.id}) بنجاح!`;
+                } else {
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
+                    feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
+                }
+            } else {
+                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
+                feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
+            }
+
+            setTimeout(() => { cooldown = false; lastScanned = ""; feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700"; feedback.innerText = "الكاميرا جاهزة..."; }, 3500);
         }
     </script>
 </body>
