@@ -8,6 +8,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         * { font-family: 'Tajawal', sans-serif; }
@@ -50,7 +52,7 @@
                         <i class="fa-solid fa-burger text-amber-500"></i> منيو المأكولات المتاح
                     </h2>
                     <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <p class="text-slate-400 text-xs py-8 col-span-2 text-center">جاري تحميل المنتجات المضافة من لوحة الكاشير...</p>
+                        <p class="text-slate-400 text-xs py-8 col-span-2 text-center">جاري تحميل المنتجات من السيرفر...</p>
                     </div>
                 </div>
 
@@ -123,12 +125,15 @@
     </main>
 
     <script>
+        const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let cart = [];
         let productsList = [];
-        let orders = [];
 
         window.addEventListener('DOMContentLoaded', () => {
-            renderProducts();
+            fetchProducts();
             checkUrlParams();
             setInterval(loadOrderTracking, 3000); 
         });
@@ -141,15 +146,16 @@
             if(tab === 'track') loadOrderTracking();
         }
 
-        function renderProducts() {
-            productsList = JSON.parse(localStorage.getItem('local_products') || '[]');
+        async function fetchProducts() {
             const grid = document.getElementById('products-grid');
+            const { data, error } = await supabase.from('products').select('*');
             
-            if(productsList.length === 0) {
-                grid.innerHTML = `<p class="text-slate-400 text-xs py-8 col-span-2 text-center">لا توجد منتجات مضافة حالياً. برجاء إضافتها من صفحة الكاشير.</p>`;
+            if(error || !data || data.length === 0) {
+                grid.innerHTML = `<p class="text-slate-400 text-xs py-8 col-span-2 text-center">لا توجد منتجات مضافة بعد من الكاشير.</p>`;
                 return;
             }
 
+            productsList = data;
             grid.innerHTML = productsList.map(p => `
                 <div class="glass-card rounded-2xl p-4 shadow-sm flex flex-col justify-between">
                     <div>
@@ -170,7 +176,6 @@
         }
 
         function addToCart(id) {
-            productsList = JSON.parse(localStorage.getItem('local_products') || '[]');
             const prod = productsList.find(p => p.id == id);
             if(!prod) return;
             const exist = cart.find(item => item.id == id);
@@ -204,28 +209,26 @@
             totalEl.innerText = `${total} ج.م`; countEl.innerText = count;
         }
 
-        function submitOrder() {
+        async function submitOrder() {
             const name = document.getElementById('student-name').value.trim();
             const phone = document.getElementById('student-phone').value.trim();
             
             if(cart.length === 0) { alert('السلة فارغة.'); return; }
-            if(!name || !/^01[0125][0-9]{8}$/.test(phone)) { alert('من فضلك ادخل الاسم ورقم هاتف مصري صحيح (11 رقم).'); return; }
+            if(!name || !/^01[0125][0-9]{8}$/.test(phone)) { alert('ادخل الاسم ورقم هاتف مصري صحيح (11 رقم).'); return; }
 
             const orderId = 'ORD-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-            const newOrder = {
+            const { error } = await supabase.from('orders').insert([{
                 id: orderId,
                 student_name: name,
                 student_phone: phone,
                 items: cart,
                 total: total,
                 status: 'pending_pickup'
-            };
+            }]);
 
-            orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-            orders.unshift(newOrder);
-            localStorage.setItem('local_orders', JSON.stringify(orders));
+            if(error) { alert('حدث خطأ أثناء إرسال الطلب، حاول ثانيةً.'); return; }
 
             localStorage.setItem('active_order_id', orderId);
             cart = []; renderCart();
@@ -233,13 +236,14 @@
             switchTab('track');
         }
 
-        function loadOrderTracking() {
+        async function loadOrderTracking() {
             const activeId = new URLSearchParams(window.location.search).get('orderId') || localStorage.getItem('active_order_id');
             const noMsg = document.getElementById('no-order-msg');
             const card = document.getElementById('order-tracking-card');
             
-            orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-            const data = orders.find(o => o.id === activeId);
+            if(!activeId) { noMsg.classList.remove('hidden'); card.classList.add('hidden'); return; }
+
+            const { data } = await supabase.from('orders').select('*').eq('id', activeId).single();
 
             if(!data) { noMsg.classList.remove('hidden'); card.classList.add('hidden'); return; }
 
