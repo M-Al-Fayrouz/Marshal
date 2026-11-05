@@ -8,7 +8,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -16,9 +15,9 @@
         .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
-    <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl shadow">
@@ -26,19 +25,20 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">كافتيريا الجامعة الذكية</h1>
-                    <p class="text-[11px] text-slate-300">اطلب من مكانك واستلم بالـ QR</p>
+                    <p class="text-[11px] text-slate-400">اطلب من مكانك واستلم بالـ QR</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button onclick="switchTab('menu')" id="nav-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-700 text-amber-400">المنيو والطلب</button>
-                <button onclick="switchTab('track')" id="nav-track" class="px-3 py-1.5 rounded-lg font-bold text-xs text-slate-300 hover:text-white">حالة طلبي والـ QR</button>
+                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer">المنيو والطلب</button>
+                <button type="button" onclick="switchTab('track')" id="nav-track" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">حالة طلبي والـ QR</button>
             </nav>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+        <!-- تبيوب المنيو -->
         <section id="tab-menu" class="space-y-6">
-            <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-white p-4 rounded-2xl shadow-lg flex items-center gap-3">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 p-4 rounded-2xl shadow-lg flex items-center gap-3">
                 <i class="fa-solid fa-bolt text-2xl animate-bounce"></i>
                 <div>
                     <h2 class="font-bold text-sm sm:text-base">اطلب وجبتك الآن بدون زحمة الكاونتر!</h2>
@@ -48,7 +48,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-4">
-                    <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <h2 class="font-bold text-lg text-white flex items-center gap-2">
                         <i class="fa-solid fa-burger text-amber-500"></i> منيو المأكولات المتاح
                     </h2>
                     <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -57,8 +57,8 @@
                 </div>
 
                 <div class="space-y-4">
-                    <div class="glass-card rounded-2xl p-5 shadow-sm sticky top-20 space-y-4">
-                        <h2 class="font-bold text-base text-slate-800 border-b pb-3 flex items-center justify-between">
+                    <div class="glass-card text-slate-900 rounded-2xl p-5 shadow-sm sticky top-20 space-y-4">
+                        <h2 class="font-bold text-base border-b pb-3 flex items-center justify-between">
                             <span><i class="fa-solid fa-cart-shopping text-indigo-600 ml-2"></i>سلة الطلبات</span>
                             <span id="cart-count" class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
                         </h2>
@@ -70,11 +70,11 @@
                         <div class="space-y-3 pt-3 border-t">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1">اسم الطالب *</label>
-                                <input type="text" id="student-name" placeholder="محمد أحمد" class="w-full text-xs p-2.5 rounded-xl border outline-none">
+                                <input type="text" id="student-name" placeholder="محمد أحمد" class="w-full text-xs p-2.5 rounded-xl border outline-none bg-white text-slate-900">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (11 رقم مصري) *</label>
-                                <input type="tel" id="student-phone" maxlength="11" placeholder="01012345678" class="w-full text-xs p-2.5 rounded-xl border outline-none">
+                                <input type="tel" id="student-phone" maxlength="11" placeholder="01012345678" class="w-full text-xs p-2.5 rounded-xl border outline-none bg-white text-slate-900">
                             </div>
 
                             <div class="pt-2 flex justify-between items-center font-bold text-slate-800">
@@ -82,7 +82,7 @@
                                 <span id="cart-total" class="text-lg text-amber-600">0 ج.م</span>
                             </div>
 
-                            <button onclick="submitOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-lg flex items-center justify-center gap-2">
+                            <button type="button" onclick="submitOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-lg cursor-pointer flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-paper-plane"></i> إرسال الطلب وإصدار الـ QR
                             </button>
                         </div>
@@ -91,15 +91,16 @@
             </div>
         </section>
 
+        <!-- تبيوب تتبع الطلب -->
         <section id="tab-track" class="hidden max-w-xl mx-auto space-y-6">
-            <div id="no-order-msg" class="glass-card rounded-2xl p-8 text-center space-y-4">
+            <div id="no-order-msg" class="glass-card text-slate-900 rounded-2xl p-8 text-center space-y-4">
                 <i class="fa-solid fa-qrcode text-5xl text-slate-300"></i>
                 <h3 class="font-bold text-slate-700 text-base">لا يوجد طلب نشط حالياً</h3>
                 <p class="text-xs text-slate-500">قم بطلب وجبة أولاً لمتابعة حالة الـ QR الخاص بك.</p>
-                <button onclick="switchTab('menu')" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl">الذهاب للمنيو</button>
+                <button type="button" onclick="switchTab('menu')" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">الذهاب للمنيو</button>
             </div>
 
-            <div id="order-tracking-card" class="hidden glass-card rounded-2xl p-6 shadow-xl space-y-5 text-center border-2 border-indigo-500">
+            <div id="order-tracking-card" class="hidden glass-card text-slate-900 rounded-2xl p-6 shadow-xl space-y-5 text-center border-2 border-indigo-500">
                 <div class="flex justify-between items-center border-b pb-3">
                     <span class="text-xs font-bold text-slate-500">رقم الطلب: <strong id="track-order-id" class="text-sm">#--</strong></span>
                     <span id="track-status-badge" class="text-xs px-3 py-1 rounded-full font-extrabold bg-amber-100 text-amber-800 animate-pulse">قيد التجهيز الاستلام</span>
@@ -117,7 +118,7 @@
                     <div class="flex justify-between"><span class="text-slate-500">الإجمالي:</span> <span id="track-price" class="font-bold text-amber-600">--</span></div>
                 </div>
 
-                <button onclick="copyLink()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
+                <button type="button" onclick="copyLink()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-2">
                     <i class="fa-solid fa-link"></i> نسخ رابط التتبع المباشر
                 </button>
             </div>
@@ -141,8 +142,8 @@
         function switchTab(tab) {
             document.getElementById('tab-menu').classList.toggle('hidden', tab !== 'menu');
             document.getElementById('tab-track').classList.toggle('hidden', tab !== 'track');
-            document.getElementById('nav-menu').className = tab === 'menu' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-700 text-amber-400" : "px-3 py-1.5 rounded-lg font-bold text-xs text-slate-300 hover:text-white";
-            document.getElementById('nav-track').className = tab === 'track' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-700 text-amber-400" : "px-3 py-1.5 rounded-lg font-bold text-xs text-slate-300 hover:text-white";
+            document.getElementById('nav-menu').className = tab === 'menu' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            document.getElementById('nav-track').className = tab === 'track' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
             if(tab === 'track') loadOrderTracking();
         }
 
@@ -157,7 +158,7 @@
 
             productsList = data;
             grid.innerHTML = productsList.map(p => `
-                <div class="glass-card rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                <div class="glass-card text-slate-900 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
                     <div>
                         <div class="h-32 bg-slate-200 rounded-xl mb-3 overflow-hidden">
                             <img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-full h-full object-cover" alt="${p.name}">
@@ -167,7 +168,7 @@
                     </div>
                     <div class="flex items-center justify-between mt-4 pt-3 border-t">
                         <span class="font-black text-amber-600 text-base">${p.price} ج.م</span>
-                        <button onclick="addToCart('${p.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition">
+                        <button type="button" onclick="addToCart('${p.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition cursor-pointer">
                             <i class="fa-solid fa-plus ml-1"></i> إضافة
                         </button>
                     </div>
@@ -199,9 +200,9 @@
                     <div class="flex justify-between items-center text-xs bg-slate-50 p-2 rounded-xl border">
                         <div><p class="font-bold">${item.name}</p><p class="text-slate-500">${item.price} × ${item.qty}</p></div>
                         <div class="flex items-center gap-1">
-                            <button onclick="cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(${idx},1); renderCart();" class="w-6 h-6 bg-slate-200 rounded font-bold">-</button>
+                            <button type="button" onclick="cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(${idx},1); renderCart();" class="w-6 h-6 bg-slate-200 rounded font-bold cursor-pointer">-</button>
                             <span class="font-bold px-1">${item.qty}</span>
-                            <button onclick="cart[idx].qty++; renderCart();" class="w-6 h-6 bg-slate-200 rounded font-bold">+</button>
+                            <button type="button" onclick="cart[idx].qty++; renderCart();" class="w-6 h-6 bg-slate-200 rounded font-bold cursor-pointer">+</button>
                         </div>
                     </div>
                 `;
