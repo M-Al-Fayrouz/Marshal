@@ -7,8 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <!-- مكتبة Supabase السحابية -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -18,7 +17,7 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col">
 
-    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 shadow-md">
+    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-50 shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl shadow">
@@ -26,19 +25,19 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
-                    <p class="text-[11px] text-slate-400">إدارة المنيو سحابياً ومسح الـ QR للاستلام</p>
+                    <p class="text-[11px] text-slate-400">إدارة المنيو سحابياً ومسح الـ QR</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer">الطلبات والماسح</button>
-                <button onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إضافة وتعديل المنيو</button>
+                <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer">الطلبات والماسح</button>
+                <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو</button>
             </nav>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-        <!-- VIEW 1: ORDERS & SCANNER -->
+        <!-- واجهة الطلبات والماسح -->
         <div id="view-orders" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
@@ -52,19 +51,26 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Camera Scanner -->
+                <!-- ماسح الـ QR مع زر تشغيل وإيقاف صريح لمنع التعارض -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا لتسليم الطلب</h2>
-                    <p class="text-xs text-slate-500">صوّر كود الـ QR الخاص بالطالب عند وصوله لإتمام التسليم:</p>
-                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px]"></div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاهزة...</div>
+                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الـ QR الآمن</h2>
+                    <p class="text-xs text-slate-500">اضغط "تشغيل الكاميرا" عند الحاجة لمسح الـ QR:</p>
+                    
+                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[200px] flex items-center justify-center text-slate-400 text-xs">الكاميرا متوقفة مؤقتاً</div>
+                    
+                    <div class="flex gap-2">
+                        <button type="button" onclick="startCamera()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-xl shadow cursor-pointer"><i class="fa-solid fa-play ml-1"></i> تشغيل الكاميرا</button>
+                        <button type="button" onclick="stopCamera()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold px-3 py-2.5 rounded-xl cursor-pointer">إيقاف</button>
+                    </div>
+
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">النظام جاهز...</div>
                 </div>
 
-                <!-- Orders List -->
+                <!-- الطلبات الواردة -->
                 <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center justify-between">
                         <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة لحظياً (سحابي)</span>
-                        <button onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                        <button type="button" onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> تحديث</button>
                     </h2>
                     <div id="kitchen-orders-list" class="space-y-3 max-h-[480px] overflow-y-auto">
                         <p class="text-center text-slate-400 text-xs py-8">جاري التحميل...</p>
@@ -73,7 +79,7 @@
             </div>
         </div>
 
-        <!-- VIEW 2: MENU & PRODUCTS MANAGER -->
+        <!-- واجهة إدارة المنيو وإضافة الوجبات -->
         <div id="view-menu-manager" class="hidden space-y-6">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو (سحابي)</h2>
@@ -81,7 +87,7 @@
                     <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: شاورما فراخ)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
                     <input type="number" id="p-price" placeholder="السعر (بالجنيه)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
                     <input type="text" id="p-image" placeholder="رابط صورة الوجبة (Image URL)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
-                    <button onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow cursor-pointer">إضافة للمنيو فوراً</button>
+                    <button type="button" onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow cursor-pointer">إضافة للمنيو فوراً</button>
                 </div>
             </div>
 
@@ -102,16 +108,14 @@
 
         let productsList = [];
         let orders = [];
-        let html5QrcodeScanner = null;
-        let lastScanned = "";
-        let cooldown = false;
+        let html5QrCode = null;
+        let isCameraActive = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
-            initScanner();
 
-            // تحديث لحظي للطلبات من قاعدة البيانات
+            // الاستماع الفوري للطلبات الجديدة سحابياً
             supabase.channel('public:orders')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
                     fetchAllOrders();
@@ -119,16 +123,81 @@
                 .subscribe();
         });
 
+        // زر تبديل الشاشات المنضبط تماماً
         function switchView(view) {
-            document.getElementById('view-orders').classList.toggle('hidden', view !== 'orders');
-            document.getElementById('view-menu-manager').classList.toggle('hidden', view !== 'menu-manager');
-            document.getElementById('btn-orders').className = view === 'orders' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
-            document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
-            
-            if(view === 'orders') {
-                setTimeout(initScanner, 200);
-            } else if(html5QrcodeScanner) {
-                try { html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
+            const ordersView = document.getElementById('view-orders');
+            const menuView = document.getElementById('view-menu-manager');
+            const btnOrders = document.getElementById('btn-orders');
+            const btnMenu = document.getElementById('btn-menu');
+
+            if (view === 'orders') {
+                ordersView.classList.remove('hidden');
+                menuView.classList.add('hidden');
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer";
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            } else if (view === 'menu-manager') {
+                ordersView.classList.add('hidden');
+                menuView.classList.remove('hidden');
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer";
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+                
+                // إيقاف الكاميرا نظيفاً عند الانتقال للمنيو لعدم حدوث أي كراش
+                stopCamera();
+                fetchAdminProducts();
+            }
+        }
+
+        // تشغيل الكاميرا بشكل آمن عند الحاجة
+        function startCamera() {
+            if (isCameraActive) return;
+
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 15, qrbox: { width: 200, height: 200 } },
+                (decodedText) => {
+                    handleScannedOrder(decodedText.trim());
+                },
+                (err) => {}
+            ).then(() => {
+                isCameraActive = true;
+                document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
+                document.getElementById('scan-feedback').innerText = "📷 الكاميرا تعمل الآن وجاهزة لمسح الـ QR...";
+            }).catch(err => {
+                console.log(err);
+                document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
+                document.getElementById('scan-feedback').innerText = "⚠️ تأكد من إعطاء إذن الكاميرا للمتصفح";
+            });
+        }
+
+        function stopCamera() {
+            if (html5QrCode && isCameraActive) {
+                html5QrCode.stop().then(() => {
+                    isCameraActive = false;
+                    document.getElementById('reader').innerHTML = "الكاميرا متوقفة مؤقتاً";
+                    document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700";
+                    document.getElementById('scan-feedback').innerText = "النظام جاهز...";
+                }).catch(() => { isCameraActive = false; });
+            }
+        }
+
+        async function handleScannedOrder(code) {
+            const feedback = document.getElementById('scan-feedback');
+            const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
+
+            if (data) {
+                if (data.status === 'pending_pickup') {
+                    await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
+                    fetchAllOrders();
+                    feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
+                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${data.id}) بنجاح!`;
+                } else {
+                    feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-blue-100 text-blue-800";
+                    feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
+                }
+            } else {
+                feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
+                feedback.innerText = `❌ كود QR غير صحيح أو غير موجود: (${code})`;
             }
         }
 
@@ -143,8 +212,8 @@
             const { data } = await supabase.from('products').select('*');
             productsList = data || [];
             const list = document.getElementById('admin-products-list');
-            if(productsList.length === 0) {
-                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. قم بإضافة منتجاتك من الأعلى.</p>`;
+            if (productsList.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد.</p>`;
                 return;
             }
             list.innerHTML = productsList.map(p => `
@@ -166,7 +235,7 @@
             const price = parseFloat(document.getElementById('p-price').value);
             const image_url = document.getElementById('p-image').value.trim();
 
-            if(!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره الصحيح.'); return; }
+            if (!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره الصحيح.'); return; }
 
             const { error } = await supabase.from('products').insert([{
                 name: name,
@@ -175,99 +244,7 @@
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
             }]);
 
-            if(error) { alert('خطأ أثناء إضافة المنتج لقاعدة البيانات.'); return; }
+            if(error) { alert('خطأ أثناء إضافة المنتج.'); return; }
 
             document.getElementById('p-name').value = '';
-            document.getElementById('p-price').value = '';
-            document.getElementById('p-image').value = '';
-            fetchAdminProducts();
-            alert('✅ تم إضافة المنتج للمنيو بنجاح وظهر للطلاب سحابياً!');
-        }
-
-        async function deleteProduct(id) {
-            if(!confirm('حذف هذا المنتج من المنيو؟')) return;
-            await supabase.from('products').delete().eq('id', id);
-            fetchAdminProducts();
-        }
-
-        function renderKitchenOrders() {
-            const container = document.getElementById('kitchen-orders-list');
-            if(orders.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-6">لا توجد طلبات واردة حالياً</p>`;
-                return;
-            }
-
-            container.innerHTML = orders.map(o => `
-                <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="font-black text-sm text-slate-900">#${o.id}</span>
-                            <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${
-                                o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار وصول الطالب والمسح' : '✅ تم الاستلام بنجاح'}</span>
-                        </div>
-                        <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
-                        <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
-                        <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        ${o.status === 'pending_pickup' ? `
-                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow cursor-pointer">
-                                <i class="fa-solid fa-check ml-1"></i> تسليم يدوي
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function manualComplete(orderId) {
-            await supabase.from('orders').update({ status: 'completed' }).eq('id', orderId);
-            fetchAllOrders();
-        }
-
-        function updateSalesStats() {
-            const completed = orders.filter(o => o.status === 'completed');
-            const revenue = completed.reduce((sum, o) => sum + Number(o.total), 0);
-            document.getElementById('sales-amount').innerText = `${revenue} ج.م`;
-            document.getElementById('completed-count').innerText = `${completed.length} طلب`;
-        }
-
-        function initScanner() {
-            if(html5QrcodeScanner) return;
-            const readerEl = document.getElementById('reader');
-            if(!readerEl) return;
-
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
-            html5QrcodeScanner.render((code) => {
-                if(cooldown || code === lastScanned) return;
-                cooldown = true; lastScanned = code.trim();
-                handleScannedOrder(lastScanned);
-            }, () => {});
-        }
-
-        async function handleScannedOrder(code) {
-            const feedback = document.getElementById('scan-feedback');
-            const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
-
-            if(data) {
-                if(data.status === 'pending_pickup') {
-                    await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
-                    fetchAllOrders();
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${data.id}) بنجاح!`;
-                } else {
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
-                    feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
-                }
-            } else {
-                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
-            }
-
-            setTimeout(() => { cooldown = false; lastScanned = ""; feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700"; feedback.innerText = "الكاميرا جاهزة..."; }, 3500);
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('p-price').
