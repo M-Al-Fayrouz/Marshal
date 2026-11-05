@@ -7,9 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <!-- مكتبة كاميرا الـ QR المعتمدة -->
+    <!-- مكتبة كاميرا الـ QR -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- مكتبة Supabase السحابية -->
+    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -31,8 +31,8 @@
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والماسح</button>
-                <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300">إدارة المنيو</button>
+                <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition">الطلبات والماسح</button>
+                <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 transition">إدارة المنيو</button>
             </nav>
         </div>
     </header>
@@ -53,11 +53,19 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- خانة الكاميرا أو إدخال الكود السريع البديل لمنع أي تعليق -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح الـ QR بالكاميرا</h2>
-                    <p class="text-xs text-slate-500">وجه الكاميرا نحو كود الطالب لتسليم الطلب فوراً:</p>
-                    <div id="reader" class="w-full rounded-xl overflow-hidden border bg-slate-950 min-h-[240px]"></div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاري تشغيلها...</div>
+                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح الـ QR أو إدخال الكود</h2>
+                    <p class="text-xs text-slate-500">اختر الكاميرا المباشرة أو اكتب كود الأوردر لتسليمه فوراً:</p>
+                    
+                    <div id="reader" class="w-full rounded-xl overflow-hidden border bg-slate-950 min-h-[200px]"></div>
+                    
+                    <div class="pt-2 border-t flex gap-2">
+                        <input type="text" id="manual-code-input" placeholder="ORD-XXXXXX" class="text-xs p-2 rounded-xl border flex-1 uppercase outline-none font-bold">
+                        <button type="button" onclick="processManualCode()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl">تسليم بالكود</button>
+                    </div>
+
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">النظام جاهز...</div>
                 </div>
 
                 <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
@@ -72,7 +80,7 @@
             </div>
         </div>
 
-        <!-- واجهة إدارة المنيو -->
+        <!-- واجهة إدارة المنيو (مفصولة تماماً ومضمونة) -->
         <div id="view-menu-manager" class="hidden space-y-6">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
@@ -107,7 +115,9 @@
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
-            startScanner();
+            
+            // محاولة تشغيل الماسح الضوئي بعد التحميل
+            setTimeout(initScanner, 500);
 
             // الاستماع للطلبات الجديدة لحظياً (Realtime)
             supabase.channel('public:orders')
@@ -117,7 +127,7 @@
                 .subscribe();
         });
 
-        // تبديل الشاشات المنضبط
+        // دالة تبديل الشاشات المباشرة والمضمونة 100%
         function switchView(view) {
             const ordersView = document.getElementById('view-orders');
             const menuView = document.getElementById('view-menu-manager');
@@ -125,74 +135,85 @@
             const btnMenu = document.getElementById('btn-menu');
 
             if (view === 'orders') {
+                ordersView.style.display = 'block';
                 ordersView.classList.remove('hidden');
+                menuView.style.display = 'none';
                 menuView.classList.add('hidden');
-                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white";
-                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-                setTimeout(startScanner, 200);
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition";
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 transition";
+                setTimeout(initScanner, 300);
             } else if (view === 'menu-manager') {
+                ordersView.style.display = 'none';
                 ordersView.classList.add('hidden');
+                menuView.style.display = 'block';
                 menuView.classList.remove('hidden');
-                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white";
-                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-                stopScanner();
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white transition";
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 transition";
+                
+                if (html5QrCode && isScannerRunning) {
+                    html5QrCode.stop().catch(() => {});
+                    isScannerRunning = false;
+                }
                 fetchAdminProducts();
             }
         }
 
-        // تشغيل الكاميرا بدون شاشة سوداء
-        function startScanner() {
-            if (isScannerRunning) return;
-            const readerElement = document.getElementById('reader');
-            if (!readerElement) return;
+        // تشغيل كاميرا الـ QR بآمان تام
+        function initScanner() {
+            const readerEl = document.getElementById('reader');
+            if (!readerEl || isScannerRunning) return;
 
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 200, height: 200 } },
+                { fps: 10, qrbox: { width: 180, height: 180 } },
                 (decodedText) => {
                     handleScannedOrder(decodedText.trim());
                 },
                 (error) => {}
             ).then(() => {
                 isScannerRunning = true;
-                document.getElementById('scan-feedback').innerText = "الكاميرا جاهزة وقيد العمل...";
+                document.getElementById('scan-feedback').innerText = "الكاميرا تعمل وجاهزة للمسح...";
             }).catch(err => {
-                console.error(err);
-                document.getElementById('scan-feedback').innerText = "⚠️ يرجى السماح للمتصفح بالوصول للكاميرا";
+                console.log(err);
+                document.getElementById('scan-feedback').innerText = "⚠️ كاميرا المتصفح غير مسموحة، استخدم الإدخال اليدوي أدناه";
             });
         }
 
-        function stopScanner() {
-            if (html5QrCode && isScannerRunning) {
-                html5QrCode.stop().then(() => {
-                    isScannerRunning = false;
-                }).catch(err => console.log(err));
-            }
+        async function handleScannedOrder(code) {
+            await executeOrderFulfillment(code);
         }
 
-        async function handleScannedOrder(code) {
+        async function processManualCode() {
+            const input = document.getElementById('manual-code-input');
+            const code = input.value.trim();
+            if(!code) { alert('ادخل كود الطلب أولاً.'); return; }
+            await executeOrderFulfillment(code);
+            input.value = '';
+        }
+
+        async function executeOrderFulfillment(code) {
             const feedback = document.getElementById('scan-feedback');
-            const { data } = await supabase.from('orders').select('*').eq('id', code).single();
+            const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
 
             if (data) {
                 if (data.status === 'pending_pickup') {
-                    await supabase.from('orders').update({ status: 'completed' }).eq('id', code);
+                    await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders();
-                    feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
                     feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
                 } else {
-                    feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-blue-100 text-blue-800";
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
                     feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
                 }
             } else {
-                feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ كود QR غير معروف: (${code})`;
+                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
+                feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
             }
 
             setTimeout(() => {
-                feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700";
-                feedback.innerText = "الكاميرا جاهزة وقيد العمل...";
+                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700";
+                feedback.innerText = "النظام جاهز...";
             }, 4000);
         }
 
@@ -217,7 +238,7 @@
                             <span class="font-black text-sm text-slate-900">#${o.id}</span>
                             <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${
                                 o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار الوصول والـ QR' : '✅ تم الاستلام بنجاح'}</span>
+                            }">${o.status === 'pending_pickup' ? '🟡 قيد الانتظار والـ QR' : '✅ تم الاستلام بنجاح'}</span>
                         </div>
                         <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
                         <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
@@ -227,7 +248,7 @@
                     <div class="flex items-center gap-2">
                         ${o.status === 'pending_pickup' ? `
                             <button type="button" onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
-                                <i class="fa-solid fa-check ml-1"></i> تسليم يدوي
+                                <i class="fa-solid fa-check ml-1"></i> تسليم فوري
                             </button>
                         ` : ''}
                     </div>
@@ -276,7 +297,7 @@
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
             }]);
 
-            if(error) { alert('خطأ أثناء إضافة المنتج، تأكد من جدول products.'); return; }
+            if(error) { alert('خطأ أثناء إضافة المنتج.'); return; }
 
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
@@ -300,5 +321,3 @@
     </script>
 </body>
 </html>
-
-
