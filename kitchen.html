@@ -7,7 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <!-- مكتبة كاميرا الـ QR الأساسية -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -25,7 +27,7 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
-                    <p class="text-[11px] text-slate-400">ماسح الـ QR وإدارة المنيو السحابي</p>
+                    <p class="text-[11px] text-slate-400">ماسح الـ QR والتحكم الكامل بالمنيو</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
@@ -37,7 +39,7 @@
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-        <!-- القسم الأول: الطلبات وماسح الـ QR -->
+        <!-- القسم الأول: الطلبات وماسح الـ QR (الافتراضي عند فتح الصفحة) -->
         <div id="section-orders" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
@@ -51,24 +53,14 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- ماسح الـ QR والتحكم بالكاميرا الآمن -->
+                <!-- كاميرا الـ QR المباشرة -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح الـ QR بالكاميرا</h2>
-                    <p class="text-xs text-slate-500">اضغط لتفعيل الكاميرا المباشرة أو استخدم الإدخال اليدوي:</p>
+                    <p class="text-xs text-slate-500">سيطلب المتصفح إذن الكاميرا تلقائياً، وافق لتبدأ القراءة:</p>
                     
-                    <div id="reader" class="w-full rounded-xl overflow-hidden border bg-black min-h-[200px] flex items-center justify-center text-slate-400 text-xs">الكاميرا غير مفعلة حالياً</div>
+                    <div id="reader" class="w-full rounded-xl overflow-hidden border bg-black min-h-[240px]"></div>
                     
-                    <div class="flex gap-2">
-                        <button type="button" onclick="startCamera()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-xl shadow cursor-pointer"><i class="fa-solid fa-camera ml-1"></i> تشغيل الكاميرا</button>
-                        <button type="button" onclick="stopCamera()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold px-3 py-2.5 rounded-xl cursor-pointer">إيقاف</button>
-                    </div>
-
-                    <div class="pt-2 border-t flex gap-2">
-                        <input type="text" id="manual-order-id" placeholder="أو أدخل كود الأوردر (ORD-...)" class="text-xs p-2.5 rounded-xl border flex-1 uppercase outline-none font-bold bg-white">
-                        <button type="button" onclick="processManualOrder()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl cursor-pointer">تسليم</button>
-                    </div>
-
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">النظام جاهز...</div>
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">جاري طلب إذن الكاميرا...</div>
                 </div>
 
                 <!-- قائمة الطلبات الواردة -->
@@ -84,7 +76,7 @@
             </div>
         </div>
 
-        <!-- القسم الثاني: إدارة المنيو (مفصول ومضمون 100%) -->
+        <!-- القسم الثاني: إدارة المنيو وإضافة الوجبات -->
         <div id="section-menu" class="space-y-6" style="display: none;">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
@@ -113,13 +105,16 @@
 
         let orders = [];
         let html5QrCode = null;
-        let isCameraActive = false;
+        let isScannerRunning = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
+            
+            // فتح الكاميرا ومطالبة الإذن تلقائياً فور تحميل الصفحة
+            setTimeout(startQrScanner, 400);
 
-            // الاستماع اللحظي للطلبات الجديدة
+            // الاستماع الفوري للطلبات الجديدة سحابياً
             supabase.channel('public:orders')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
                     fetchAllOrders();
@@ -127,7 +122,7 @@
                 .subscribe();
         });
 
-        // دالة تبديل التبويبات المباشرة (الطلبات والمنيو)
+        // دالة التبديل بين قسم الطلبات وقسم إدارة المنيو
         function switchTab(tab) {
             const ordersSec = document.getElementById('section-orders');
             const menuSec = document.getElementById('section-menu');
@@ -139,63 +134,51 @@
                 menuSec.style.display = 'none';
                 navOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 navMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
+                setTimeout(startQrScanner, 300);
             } else {
                 ordersSec.style.display = 'none';
                 menuSec.style.display = 'block';
                 navMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 navOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
-                stopCamera();
+                stopQrScanner();
                 fetchAdminProducts();
             }
         }
 
-        // تشغيل الكاميرا بشكل آمن عند الضغط على الزر
-        function startCamera() {
-            if (isCameraActive) return;
+        // تشغيل الماسح الضوئي وطلب إذن الكاميرا
+        function startQrScanner() {
+            if (isScannerRunning) return;
+            const readerEl = document.getElementById('reader');
+            if (!readerEl) return;
 
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 200, height: 200 } },
+                { fps: 15, qrbox: { width: 220, height: 220 } },
                 (decodedText) => {
                     handleScannedCode(decodedText.trim());
                 },
                 (err) => {}
             ).then(() => {
-                isCameraActive = true;
+                isScannerRunning = true;
                 document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
-                document.getElementById('scan-feedback').innerText = "📷 الكاميرا تعمل وتلتقط الـ QR الآن...";
+                document.getElementById('scan-feedback').innerText = "📷 الكاميرا تعمل وجاهزة لمسح الـ QR...";
             }).catch(err => {
                 console.log(err);
                 document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
-                document.getElementById('scan-feedback').innerText = "⚠️ يرجى السماح للمتصفح بالوصول للكاميرا";
+                document.getElementById('scan-feedback').innerText = "⚠️ يرجى الضغط على 'سماح' لإذن الكاميرا من المتصفح";
             });
         }
 
-        function stopCamera() {
-            if (html5QrCode && isCameraActive) {
+        function stopQrScanner() {
+            if (html5QrCode && isScannerRunning) {
                 html5QrCode.stop().then(() => {
-                    isCameraActive = false;
-                    document.getElementById('reader').innerHTML = "الكاميرا متوقفة";
-                    document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700";
-                    document.getElementById('scan-feedback').innerText = "تم إيقاف الكاميرا";
-                }).catch(() => { isCameraActive = false; });
+                    isScannerRunning = false;
+                }).catch(() => { isScannerRunning = false; });
             }
         }
 
         async function handleScannedCode(code) {
-            await processOrderFulfillment(code);
-        }
-
-        async function processManualOrder() {
-            const input = document.getElementById('manual-order-id');
-            const code = input.value.trim();
-            if(!code) { alert('ادخل كود الطلب أولاً.'); return; }
-            await processOrderFulfillment(code);
-            input.value = '';
-        }
-
-        async function processOrderFulfillment(code) {
             const feedback = document.getElementById('scan-feedback');
             const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
 
@@ -204,7 +187,7 @@
                     await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders();
                     feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
+                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${data.id}) بنجاح!`;
                 } else {
                     feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-blue-100 text-blue-800";
                     feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
@@ -213,6 +196,11 @@
                 feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
                 feedback.innerText = `❌ كود QR غير صحيح أو غير موجود: (${code})`;
             }
+
+            setTimeout(() => {
+                feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700";
+                feedback.innerText = "📷 الكاميرا تعمل وجاهزة لمسح الـ QR...";
+            }, 4000);
         }
 
         async function fetchAllOrders() {
