@@ -7,9 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <!-- مكتبة كاميرا الـ QR الأساسية -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -31,16 +29,16 @@
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button onclick="switchTab('orders')" id="nav-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer">الطلبات والماسح</button>
-                <button onclick="switchTab('menu')" id="nav-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو</button>
+                <button type="button" onclick="switchTab('orders')" id="nav-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer">الطلبات والماسح</button>
+                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو</button>
             </nav>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-        <!-- القسم الأول: الطلبات وماسح الـ QR -->
-        <section id="section-orders" class="space-y-6">
+        <!-- واجهة الطلبات والـ QR -->
+        <div id="section-orders" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
                     <div><p class="text-xs text-slate-500 font-bold">إجمالي مبيعات اليوم</p><h3 id="sales-amount" class="text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3></div>
@@ -53,7 +51,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- شاشة الكاميرا وقراءة الـ QR -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح الـ QR بالكاميرا</h2>
                     <p class="text-xs text-slate-500">وجه الكاميرا نحو كود الـ QR الخاص بالطالب:</p>
@@ -63,28 +60,27 @@
                     <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">جاري تشغيل الكاميرا...</div>
                 </div>
 
-                <!-- قائمة الطلبات الواردة -->
                 <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center justify-between">
                         <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة (تحديث لحظي)</span>
-                        <button onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                        <button type="button" onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> تحديث</button>
                     </h2>
                     <div id="kitchen-orders-list" class="space-y-3 max-h-[480px] overflow-y-auto">
                         <p class="text-center text-slate-400 text-xs py-8">جاري التحميل...</p>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- القسم الثاني: إدارة المنيو -->
-        <section id="section-menu" class="space-y-6" style="display: none;">
+        <!-- واجهة إدارة المنيو -->
+        <div id="section-menu" class="space-y-6" style="display: none;">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
                     <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: شاورما فراخ)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
                     <input type="number" id="p-price" placeholder="السعر (بالجنيه)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
                     <input type="text" id="p-image" placeholder="رابط صورة الوجبة (Image URL)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
-                    <button onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow cursor-pointer">إضافة للمنيو فوراً</button>
+                    <button type="button" onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow cursor-pointer">إضافة للمنيو فوراً</button>
                 </div>
             </div>
 
@@ -94,7 +90,7 @@
                     <p class="text-slate-400 text-xs py-6">لا توجد منتجات مضافة بعد.</p>
                 </div>
             </div>
-        </section>
+        </div>
 
     </main>
 
@@ -112,7 +108,6 @@
             fetchAdminProducts();
             startQrScanner();
 
-            // الاستماع الفوري لأي طلبات جديدة عبر Supabase Realtime
             supabase.channel('public:orders')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
                     fetchAllOrders();
@@ -120,7 +115,6 @@
                 .subscribe();
         });
 
-        // تبديل الشاشات المباشر والمضمون للأزرار
         function switchTab(tab) {
             const ordersSec = document.getElementById('section-orders');
             const menuSec = document.getElementById('section-menu');
@@ -143,7 +137,6 @@
             }
         }
 
-        // تشغيل الكاميرا الخاصة بقراءة الـ QR
         function startQrScanner() {
             if (isScannerRunning) return;
             const readerEl = document.getElementById('reader');
@@ -174,7 +167,6 @@
             }
         }
 
-        // التعامل مع كود الـ QR عند التقاطه بالكاميرا
         async function handleScannedCode(code) {
             const feedback = document.getElementById('scan-feedback');
             const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
@@ -277,7 +269,7 @@
                 price: price,
                 category: 'وجبة سريعة',
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
-            } فوق]);
+            }]);
 
             if(error) { alert('خطأ أثناء إضافة المنتج.'); return; }
 
