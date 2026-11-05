@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
         * { font-family: 'Tajawal', sans-serif; }
@@ -24,11 +23,11 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
-                    <p class="text-[11px] text-slate-400">إدارة المنيو بالكامل ومسح الـ QR للاستلام</p>
+                    <p class="text-[11px] text-slate-400">إدارة المنيو وتسليم الطلبات</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والماسح</button>
+                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والأوردرات</button>
                 <button onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300">إضافة وتعديل المنيو</button>
             </nav>
         </div>
@@ -36,6 +35,7 @@
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
+        <!-- VIEW 1: ORDERS & FAST CHECKOUT -->
         <div id="view-orders" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
@@ -49,13 +49,18 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Fast Code Check / Alternative to Camera -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا لتسليم الطلب</h2>
-                    <p class="text-xs text-slate-500">صوّر كود الـ QR الخاص بالطالب عند وصوله للكاونتر لإتمام التسليم:</p>
-                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px]"></div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاهزة...</div>
+                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-bolt text-indigo-600"></i> تسليم طلب سريع بالكود</h2>
+                    <p class="text-xs text-slate-500">اكتب كود الطلب (مثال: ORD-XXXXXX) أو اضغط زر التسليم بجانب الطلب مباشرة:</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="quick-order-code" placeholder="ORD-ABC123" class="text-xs p-3 rounded-xl border flex-1 uppercase outline-none">
+                        <button onclick="processQuickOrder()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 rounded-xl shadow">تسليم</button>
+                    </div>
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">النظام جاهز...</div>
                 </div>
 
+                <!-- Orders List -->
                 <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center justify-between">
                         <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة لحظياً</span>
@@ -68,6 +73,7 @@
             </div>
         </div>
 
+        <!-- VIEW 2: MENU & PRODUCTS MANAGER -->
         <div id="view-menu-manager" class="hidden space-y-6">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
@@ -92,9 +98,6 @@
     <script>
         let productsList = JSON.parse(localStorage.getItem('local_products') || '[]');
         let orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-        let html5QrcodeScanner = null;
-        let lastScanned = "";
-        let cooldown = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
@@ -106,9 +109,6 @@
             document.getElementById('view-menu-manager').classList.toggle('hidden', view !== 'menu-manager');
             document.getElementById('btn-orders').className = view === 'orders' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
             document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-            
-            if(view === 'orders') initScanner();
-            else if(html5QrcodeScanner) { try{html5QrcodeScanner.clear(); html5QrcodeScanner=null;}catch(e){} }
         }
 
         function fetchAllOrders() {
@@ -184,7 +184,7 @@
                             <span class="font-black text-sm text-slate-900">#${o.id}</span>
                             <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${
                                 o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار وصول الطالب والمسح' : '✅ تم الاستلام بنجاح'}</span>
+                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار وصول الطالب' : '✅ تم الاستلام بنجاح'}</span>
                         </div>
                         <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
                         <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
@@ -193,10 +193,10 @@
 
                     <div class="flex items-center gap-2">
                         ${o.status === 'pending_pickup' ? `
-                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
-                                <i class="fa-solid fa-check ml-1"></i> تسليم يدوي
+                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2.5 rounded-xl shadow flex items-center gap-1">
+                                <i class="fa-solid fa-check"></i> تسليم فوري
                             </button>
-                        ` : ''}
+                        ` : '<span class="text-xs text-emerald-600 font-bold">تم الإنجاز</span>'}
                     </div>
                 </div>
             `).join('');
@@ -211,45 +211,35 @@
             }
         }
 
+        function processQuickOrder() {
+            const codeInput = document.getElementById('quick-order-code');
+            const code = codeInput.value.trim().toUpperCase();
+            const feedback = document.getElementById('scan-feedback');
+            
+            const idx = orders.findIndex(o => o.id.toUpperCase() === code);
+            if(idx !== -1) {
+                if(orders[idx].status === 'pending_pickup') {
+                    orders[idx].status = 'completed';
+                    localStorage.setItem('local_orders', JSON.stringify(orders));
+                    fetchAllOrders();
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
+                    feedback.innerText = `✅ تم تسليم الطلب (${code}) بنجاح وإقفاله!`;
+                    codeInput.value = '';
+                } else {
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
+                    feedback.innerText = `ℹ️ الطلب (${code}) تم تسليمه مسبقاً!`;
+                }
+            } else {
+                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
+                feedback.innerText = `❌ عذراً، رقم الطلب (${code}) غير موجود!`;
+            }
+        }
+
         function updateSalesStats() {
             const completed = orders.filter(o => o.status === 'completed');
             const revenue = completed.reduce((sum, o) => sum + Number(o.total), 0);
             document.getElementById('sales-amount').innerText = `${revenue} ج.م`;
             document.getElementById('completed-count').innerText = `${completed.length} طلب`;
-        }
-
-        function initScanner() {
-            if(html5QrcodeScanner) return;
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
-            html5QrcodeScanner.render((code) => {
-                if(cooldown || code === lastScanned) return;
-                cooldown = true; lastScanned = code.trim();
-                handleScannedOrder(lastScanned);
-            }, () => {});
-        }
-
-        function handleScannedOrder(code) {
-            const feedback = document.getElementById('scan-feedback');
-            const idx = orders.findIndex(o => o.id.toUpperCase() === code.toUpperCase());
-
-            if(idx !== -1) {
-                const target = orders[idx];
-                if(target.status === 'pending_pickup') {
-                    orders[idx].status = 'completed';
-                    localStorage.setItem('local_orders', JSON.stringify(orders));
-                    fetchAllOrders();
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${target.id}) بنجاح!`;
-                } else {
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
-                    feedback.innerText = `ℹ️ الطلب (${target.id}) تم تسليمه مسبقاً!`;
-                }
-            } else {
-                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
-            }
-
-            setTimeout(() => { cooldown = false; lastScanned = ""; feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700"; feedback.innerText = "الكاميرا جاهزة..."; }, 3500);
         }
     </script>
 </body>
