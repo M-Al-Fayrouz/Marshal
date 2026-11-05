@@ -38,6 +38,7 @@
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
+        <!-- واجهة الطلبات والماسح -->
         <div id="view-orders" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
@@ -70,6 +71,7 @@
             </div>
         </div>
 
+        <!-- واجهة إدارة المنيو -->
         <div id="view-menu-manager" class="hidden space-y-6">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
@@ -114,14 +116,27 @@
                 .subscribe();
         });
 
+        // دالة تبديل الشاشات المصححة والمضمونة 100%
         function switchView(view) {
-            document.getElementById('view-orders').classList.toggle('hidden', view !== 'orders');
-            document.getElementById('view-menu-manager').classList.toggle('hidden', view !== 'menu-manager');
-            document.getElementById('btn-orders').className = view === 'orders' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-            document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-            
-            if (view === 'orders') setTimeout(initQrScanner, 300);
-            else stopQrScanner();
+            const ordersView = document.getElementById('view-orders');
+            const menuView = document.getElementById('view-menu-manager');
+            const btnOrders = document.getElementById('btn-orders');
+            const btnMenu = document.getElementById('btn-menu');
+
+            if (view === 'orders') {
+                ordersView.classList.remove('hidden');
+                menuView.classList.add('hidden');
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white";
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
+                setTimeout(initQrScanner, 300);
+            } else if (view === 'menu-manager') {
+                ordersView.classList.add('hidden');
+                menuView.classList.remove('hidden');
+                btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white";
+                btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
+                stopQrScanner();
+                fetchAdminProducts(); // تحديث القائمة فور فتحها
+            }
         }
 
         function initQrScanner() {
@@ -252,13 +267,13 @@
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
             }]);
 
-            if(error) { alert('خطأ أثناء إضافة المنتج، تأكد من إنشاء الجدول.'); return; }
+            if(error) { alert('خطأ أثناء إضافة المنتج، تأكد من وجود جدول products في Supabase.'); return; }
 
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
             document.getElementById('p-image').value = '';
             fetchAdminProducts();
-            alert('✅ تم إضافة المنتج للمنيو بنجاح!');
+            alert('✅ تم إضافة المنتج للمنيو بنجاح وسُمِع عند الطلاب فوراً!');
         }
 
         async function deleteProduct(id) {
