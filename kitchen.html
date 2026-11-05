@@ -8,6 +8,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- مكتبة Supabase السحابية -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         * { font-family: 'Tajawal', sans-serif; }
@@ -24,12 +26,12 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
-                    <p class="text-[11px] text-slate-400">إدارة المنيو بالكامل ومسح الـ QR للاستلام</p>
+                    <p class="text-[11px] text-slate-400">إدارة المنيو سحابياً ومسح الـ QR للاستلام</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والماسح</button>
-                <button onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300">إضافة وتعديل المنيو</button>
+                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer">الطلبات والماسح</button>
+                <button onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إضافة وتعديل المنيو</button>
             </nav>
         </div>
     </header>
@@ -53,7 +55,7 @@
                 <!-- Camera Scanner -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا لتسليم الطلب</h2>
-                    <p class="text-xs text-slate-500">صوّر كود الـ QR الخاص بالطالب عند وصوله للكاونتر لإتمام التسليم:</p>
+                    <p class="text-xs text-slate-500">صوّر كود الـ QR الخاص بالطالب عند وصوله لإتمام التسليم:</p>
                     <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px]"></div>
                     <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاهزة...</div>
                 </div>
@@ -61,8 +63,8 @@
                 <!-- Orders List -->
                 <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center justify-between">
-                        <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة لحظياً</span>
-                        <button onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                        <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة لحظياً (سحابي)</span>
+                        <button onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> تحديث</button>
                     </h2>
                     <div id="kitchen-orders-list" class="space-y-3 max-h-[480px] overflow-y-auto">
                         <p class="text-center text-slate-400 text-xs py-8">جاري التحميل...</p>
@@ -74,12 +76,12 @@
         <!-- VIEW 2: MENU & PRODUCTS MANAGER -->
         <div id="view-menu-manager" class="hidden space-y-6">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
-                <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
+                <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو (سحابي)</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
-                    <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: شاورما فراخ)" class="text-xs p-2.5 rounded-xl border outline-none">
-                    <input type="number" id="p-price" placeholder="السعر (بالجنيه)" class="text-xs p-2.5 rounded-xl border outline-none">
-                    <input type="text" id="p-image" placeholder="رابط صورة الوجبة (Image URL)" class="text-xs p-2.5 rounded-xl border outline-none">
-                    <button onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow">إضافة للمنيو فوراً</button>
+                    <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: شاورما فراخ)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
+                    <input type="number" id="p-price" placeholder="السعر (بالجنيه)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
+                    <input type="text" id="p-image" placeholder="رابط صورة الوجبة (Image URL)" class="text-xs p-2.5 rounded-xl border outline-none bg-white">
+                    <button onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-xl shadow cursor-pointer">إضافة للمنيو فوراً</button>
                 </div>
             </div>
 
@@ -94,8 +96,12 @@
     </main>
 
     <script>
-        let productsList = JSON.parse(localStorage.getItem('local_products') || '[]');
-        let orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+        const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let productsList = [];
+        let orders = [];
         let html5QrcodeScanner = null;
         let lastScanned = "";
         let cooldown = false;
@@ -103,26 +109,39 @@
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
+            initScanner();
+
+            // تحديث لحظي للطلبات من قاعدة البيانات
+            supabase.channel('public:orders')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+                    fetchAllOrders();
+                })
+                .subscribe();
         });
 
         function switchView(view) {
             document.getElementById('view-orders').classList.toggle('hidden', view !== 'orders');
             document.getElementById('view-menu-manager').classList.toggle('hidden', view !== 'menu-manager');
-            document.getElementById('btn-orders').className = view === 'orders' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
-            document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
+            document.getElementById('btn-orders').className = view === 'orders' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
             
-            if(view === 'orders') initScanner();
-            else if(html5QrcodeScanner) { try{html5QrcodeScanner.clear(); html5QrcodeScanner=null;}catch(e){} }
+            if(view === 'orders') {
+                setTimeout(initScanner, 200);
+            } else if(html5QrcodeScanner) {
+                try { html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
+            }
         }
 
-        function fetchAllOrders() {
-            orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+        async function fetchAllOrders() {
+            const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+            orders = data || [];
             renderKitchenOrders();
             updateSalesStats();
         }
 
-        function fetchAdminProducts() {
-            productsList = JSON.parse(localStorage.getItem('local_products') || '[]');
+        async function fetchAdminProducts() {
+            const { data } = await supabase.from('products').select('*');
+            productsList = data || [];
             const list = document.getElementById('admin-products-list');
             if(productsList.length === 0) {
                 list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. قم بإضافة منتجاتك من الأعلى.</p>`;
@@ -137,40 +156,37 @@
                             <p class="text-amber-600 font-bold text-xs">${p.price} ج.م</p>
                         </div>
                     </div>
-                    <button onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
         }
 
-        function addNewProduct() {
+        async function addNewProduct() {
             const name = document.getElementById('p-name').value.trim();
             const price = parseFloat(document.getElementById('p-price').value);
             const image_url = document.getElementById('p-image').value.trim();
 
             if(!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره الصحيح.'); return; }
 
-            const newProd = {
-                id: Date.now(),
+            const { error } = await supabase.from('products').insert([{
                 name: name,
                 price: price,
                 category: 'وجبة سريعة',
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
-            };
+            }]);
 
-            productsList.unshift(newProd);
-            localStorage.setItem('local_products', JSON.stringify(productsList));
+            if(error) { alert('خطأ أثناء إضافة المنتج لقاعدة البيانات.'); return; }
 
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
             document.getElementById('p-image').value = '';
             fetchAdminProducts();
-            alert('✅ تم إضافة المنتج للمنيو بنجاح وأصبح ظاهراً للطلاب فوراً!');
+            alert('✅ تم إضافة المنتج للمنيو بنجاح وظهر للطلاب سحابياً!');
         }
 
-        function deleteProduct(id) {
+        async function deleteProduct(id) {
             if(!confirm('حذف هذا المنتج من المنيو؟')) return;
-            productsList = productsList.filter(p => p.id != id);
-            localStorage.setItem('local_products', JSON.stringify(productsList));
+            await supabase.from('products').delete().eq('id', id);
             fetchAdminProducts();
         }
 
@@ -197,7 +213,7 @@
 
                     <div class="flex items-center gap-2">
                         ${o.status === 'pending_pickup' ? `
-                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
+                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow cursor-pointer">
                                 <i class="fa-solid fa-check ml-1"></i> تسليم يدوي
                             </button>
                         ` : ''}
@@ -206,13 +222,9 @@
             `).join('');
         }
 
-        function manualComplete(orderId) {
-            const idx = orders.findIndex(o => o.id === orderId);
-            if(idx !== -1) {
-                orders[idx].status = 'completed';
-                localStorage.setItem('local_orders', JSON.stringify(orders));
-                fetchAllOrders();
-            }
+        async function manualComplete(orderId) {
+            await supabase.from('orders').update({ status: 'completed' }).eq('id', orderId);
+            fetchAllOrders();
         }
 
         function updateSalesStats() {
@@ -224,6 +236,9 @@
 
         function initScanner() {
             if(html5QrcodeScanner) return;
+            const readerEl = document.getElementById('reader');
+            if(!readerEl) return;
+
             html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
             html5QrcodeScanner.render((code) => {
                 if(cooldown || code === lastScanned) return;
@@ -232,21 +247,19 @@
             }, () => {});
         }
 
-        function handleScannedOrder(code) {
+        async function handleScannedOrder(code) {
             const feedback = document.getElementById('scan-feedback');
-            const idx = orders.findIndex(o => o.id.toUpperCase() === code.toUpperCase());
+            const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
 
-            if(idx !== -1) {
-                const target = orders[idx];
-                if(target.status === 'pending_pickup') {
-                    orders[idx].status = 'completed';
-                    localStorage.setItem('local_orders', JSON.stringify(orders));
+            if(data) {
+                if(data.status === 'pending_pickup') {
+                    await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders();
                     feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${target.id}) بنجاح!`;
+                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${data.id}) بنجاح!`;
                 } else {
                     feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
-                    feedback.innerText = `ℹ️ الطلب (${target.id}) تم تسليمه مسبقاً!`;
+                    feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
                 }
             } else {
                 feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
