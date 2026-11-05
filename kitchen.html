@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <!-- مكتبة قراءة الـ QR السريعة والمستقرة -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
         * { font-family: 'Tajawal', sans-serif; }
@@ -23,19 +25,19 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
-                    <p class="text-[11px] text-slate-400">إدارة المنيو وتسليم الطلبات</p>
+                    <p class="text-[11px] text-slate-400">ماسح الـ QR والتحكم الكامل بالمنيو</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والأوردرات</button>
-                <button onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300">إضافة وتعديل المنيو</button>
+                <button onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white">الطلبات والماسح</button>
+                <button onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300">إدارة المنيو</button>
             </nav>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-        <!-- VIEW 1: ORDERS & FAST CHECKOUT -->
+        <!-- VIEW 1: ORDERS & QR SCANNER -->
         <div id="view-orders" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
@@ -49,21 +51,21 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Fast Code Check / Alternative to Camera -->
+                <!-- QR Camera Scanner Box -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-bolt text-indigo-600"></i> تسليم طلب سريع بالكود</h2>
-                    <p class="text-xs text-slate-500">اكتب كود الطلب (مثال: ORD-XXXXXX) أو اضغط زر التسليم بجانب الطلب مباشرة:</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="quick-order-code" placeholder="ORD-ABC123" class="text-xs p-3 rounded-xl border flex-1 uppercase outline-none">
-                        <button onclick="processQuickOrder()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 rounded-xl shadow">تسليم</button>
-                    </div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">النظام جاهز...</div>
+                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح الـ QR بالكاميرا</h2>
+                    <p class="text-xs text-slate-500">وجه الكاميرا نحو كود الطالب لتسليم الطلب فوراً:</p>
+                    
+                    <!-- مكان عرض الكاميرا -->
+                    <div id="reader" class="w-full rounded-xl overflow-hidden border bg-slate-950 min-h-[240px]"></div>
+                    
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاهزة للعمل...</div>
                 </div>
 
                 <!-- Orders List -->
                 <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <h2 class="font-bold text-base flex items-center justify-between">
-                        <span><i class="fa-solid fa-list-check text-amber-500 ml-1"></i> الطلبات الواردة لحظياً</span>
+                        <span><i class="fa-solid id-card text-amber-500 ml-1"></i> الطلبات الواردة لحظياً</span>
                         <button onclick="fetchAllOrders()" class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold"><i class="fa-solid fa-rotate"></i> تحديث</button>
                     </h2>
                     <div id="kitchen-orders-list" class="space-y-3 max-h-[480px] overflow-y-auto">
@@ -73,7 +75,7 @@
             </div>
         </div>
 
-        <!-- VIEW 2: MENU & PRODUCTS MANAGER -->
+        <!-- VIEW 2: MENU MANAGER -->
         <div id="view-menu-manager" class="hidden space-y-6">
             <div class="glass-card text-slate-900 p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد إلى المنيو</h2>
@@ -98,10 +100,13 @@
     <script>
         let productsList = JSON.parse(localStorage.getItem('local_products') || '[]');
         let orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+        let html5QrCode = null;
+        let isScanningActive = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
+            initQrScanner();
         });
 
         function switchView(view) {
@@ -109,6 +114,75 @@
             document.getElementById('view-menu-manager').classList.toggle('hidden', view !== 'menu-manager');
             document.getElementById('btn-orders').className = view === 'orders' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
             document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300";
+            
+            if (view === 'orders') {
+                setTimeout(initQrScanner, 300);
+            } else {
+                stopQrScanner();
+            }
+        }
+
+        // تشغيل كاميرا ماسح الـ QR بكفاءة عالية وبدون شاشة سوداء
+        function initQrScanner() {
+            if (isScanningActive) return;
+            
+            const readerDiv = document.getElementById('reader');
+            if (!readerDiv) return;
+
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 15, qrbox: { width: 200, height: 200 } };
+
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                (decodedText) => {
+                    handleScannedOrder(decodedText.trim());
+                },
+                (errorMessage) => {
+                    // أخطاء البحث عن الـ QR العادية يتم تجاهلها لعدم إزعاج الكونسول
+                }
+            ).then(() => {
+                isScanningActive = true;
+            }).catch(err => {
+                console.warn("تعذر فتح الكاميرا المباشرة:", err);
+                document.getElementById('scan-feedback').innerText = "⚠️ تأكد من إعطاء إذن الكاميرا للمتصفح";
+            });
+        }
+
+        function stopQrScanner() {
+            if (html5QrCode && isScanningActive) {
+                html5QrCode.stop().then(() => {
+                    isScanningActive = false;
+                }).catch(err => console.log(err));
+            }
+        }
+
+        function handleScannedOrder(code) {
+            const feedback = document.getElementById('scan-feedback');
+            orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+            const idx = orders.findIndex(o => o.id.toUpperCase() === code.toUpperCase());
+
+            if (idx !== -1) {
+                const target = orders[idx];
+                if (target.status === 'pending_pickup') {
+                    orders[idx].status = 'completed';
+                    localStorage.setItem('local_orders', JSON.stringify(orders));
+                    fetchAllOrders();
+                    feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
+                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${target.id}) بنجاح!`;
+                } else {
+                    feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-blue-100 text-blue-800";
+                    feedback.innerText = `ℹ️ الطلب (${target.id}) تم تسليمه مسبقاً!`;
+                }
+            } else {
+                feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
+                feedback.innerText = `❌ كود QR غير معروف أو غير موجود: (${code})`;
+            }
+
+            setTimeout(() => {
+                feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-slate-100 text-slate-700";
+                feedback.innerText = "الكاميرا جاهزة للعمل...";
+            }, 4000);
         }
 
         function fetchAllOrders() {
@@ -117,11 +191,52 @@
             updateSalesStats();
         }
 
+        function renderKitchenOrders() {
+            const container = document.getElementById('kitchen-orders-list');
+            if (orders.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-6">لا توجد طلبات واردة حالياً</p>`;
+                return;
+            }
+
+            container.innerHTML = orders.map(o => `
+                <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-black text-sm text-slate-900">#${o.id}</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${
+                                o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار وصول الطالب ومرور الـ QR' : '✅ تم الاستلام بنجاح'}</span>
+                        </div>
+                        <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
+                        <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
+                        <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        ${o.status === 'pending_pickup' ? `
+                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow">
+                                <i class="fa-solid fa-check ml-1"></i> تسليم يدوي
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function manualComplete(orderId) {
+            const idx = orders.findIndex(o => o.id === orderId);
+            if (idx !== -1) {
+                orders[idx].status = 'completed';
+                localStorage.setItem('local_orders', JSON.stringify(orders));
+                fetchAllOrders();
+            }
+        }
+
         function fetchAdminProducts() {
             productsList = JSON.parse(localStorage.getItem('local_products') || '[]');
             const list = document.getElementById('admin-products-list');
-            if(productsList.length === 0) {
-                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. قم بإضافة منتجاتك من الأعلى.</p>`;
+            if (productsList.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد.</p>`;
                 return;
             }
             list.innerHTML = productsList.map(p => `
@@ -143,7 +258,7 @@
             const price = parseFloat(document.getElementById('p-price').value);
             const image_url = document.getElementById('p-image').value.trim();
 
-            if(!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره الصحيح.'); return; }
+            if (!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره الصحيح.'); return; }
 
             const newProd = {
                 id: Date.now(),
@@ -160,79 +275,14 @@
             document.getElementById('p-price').value = '';
             document.getElementById('p-image').value = '';
             fetchAdminProducts();
-            alert('✅ تم إضافة المنتج للمنيو بنجاح وأصبح ظاهراً للطلاب فوراً!');
+            alert('✅ تم إضافة المنتج للمنيو بنجاح!');
         }
 
         function deleteProduct(id) {
-            if(!confirm('حذف هذا المنتج من المنيو؟')) return;
+            if (!confirm('حذف هذا المنتج من المنيو؟')) return;
             productsList = productsList.filter(p => p.id != id);
             localStorage.setItem('local_products', JSON.stringify(productsList));
             fetchAdminProducts();
-        }
-
-        function renderKitchenOrders() {
-            const container = document.getElementById('kitchen-orders-list');
-            if(orders.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-6">لا توجد طلبات واردة حالياً</p>`;
-                return;
-            }
-
-            container.innerHTML = orders.map(o => `
-                <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="font-black text-sm text-slate-900">#${o.id}</span>
-                            <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${
-                                o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار وصول الطالب' : '✅ تم الاستلام بنجاح'}</span>
-                        </div>
-                        <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
-                        <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
-                        <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        ${o.status === 'pending_pickup' ? `
-                            <button onclick="manualComplete('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2.5 rounded-xl shadow flex items-center gap-1">
-                                <i class="fa-solid fa-check"></i> تسليم فوري
-                            </button>
-                        ` : '<span class="text-xs text-emerald-600 font-bold">تم الإنجاز</span>'}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function manualComplete(orderId) {
-            const idx = orders.findIndex(o => o.id === orderId);
-            if(idx !== -1) {
-                orders[idx].status = 'completed';
-                localStorage.setItem('local_orders', JSON.stringify(orders));
-                fetchAllOrders();
-            }
-        }
-
-        function processQuickOrder() {
-            const codeInput = document.getElementById('quick-order-code');
-            const code = codeInput.value.trim().toUpperCase();
-            const feedback = document.getElementById('scan-feedback');
-            
-            const idx = orders.findIndex(o => o.id.toUpperCase() === code);
-            if(idx !== -1) {
-                if(orders[idx].status === 'pending_pickup') {
-                    orders[idx].status = 'completed';
-                    localStorage.setItem('local_orders', JSON.stringify(orders));
-                    fetchAllOrders();
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم تسليم الطلب (${code}) بنجاح وإقفاله!`;
-                    codeInput.value = '';
-                } else {
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
-                    feedback.innerText = `ℹ️ الطلب (${code}) تم تسليمه مسبقاً!`;
-                }
-            } else {
-                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ عذراً، رقم الطلب (${code}) غير موجود!`;
-            }
         }
 
         function updateSalesStats() {
@@ -244,3 +294,4 @@
     </script>
 </body>
 </html>
+
