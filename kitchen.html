@@ -13,9 +13,27 @@
         * { font-family: 'Tajawal', sans-serif; }
         .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         #reader video { width: 100% !important; height: 260px !important; object-fit: cover !important; border-radius: 0.75rem !important; }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- نافذة منبثقة تفاعلية فاجرة لتأكيد النجاح -->
+    <div id="success-popup" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-4 shadow-2xl border-4 border-emerald-500 animate-pop">
+            <div class="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full mx-auto flex items-center justify-center text-5xl shadow-lg">
+                <i class="fa-solid fa-check animate-bounce"></i>
+            </div>
+            <h2 class="font-black text-2xl text-emerald-700">تم تأكيد وتسليم الطلب بنجاح! 🔥</h2>
+            <p id="popup-order-details" class="text-sm font-bold text-slate-700 bg-emerald-50 p-3 rounded-xl border border-emerald-200">--</p>
+            <button type="button" onclick="closeSuccessPopup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-sm shadow-lg cursor-pointer">مواطن / متابعة المسح</button>
+        </div>
+    </div>
 
     <!-- شاشة إدخال كلمة المرور (2529) -->
     <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
@@ -96,6 +114,7 @@
         const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
         let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let orders = [], productsList = [], html5QrCode = null;
+        let isProcessingScan = false;
 
         function verifyPassword() {
             const pass = document.getElementById('admin-pass').value.trim();
@@ -123,19 +142,18 @@
             try {
                 if(!html5QrCode) html5QrCode = new Html5Qrcode("reader");
                 if(!html5QrCode.isScanning) {
-                    // تم رفع سرعة الالتقاط وتوسيع نطاق الماسح لضمان القراءة الفورية
                     await html5QrCode.start(
                         { facingMode: "environment" }, 
                         { fps: 20, qrbox: { width: 220, height: 220 } }, 
                         async (decodedText) => { 
+                            if(isProcessingScan) return;
+                            isProcessingScan = true;
                             await handleScannedOrder(decodedText.trim()); 
                         }, 
                         () => {}
                     );
                 }
-            } catch(e) {
-                console.error("Camera scan error:", e);
-            }
+            } catch(e) {}
         }
 
         async function fetchAllOrders() {
@@ -189,9 +207,9 @@
             const name = document.getElementById('p-name').value.trim();
             const price = parseFloat(document.getElementById('p-price').value);
             const image_url = document.getElementById('p-image').value.trim();
-            if(!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره.'); return; }
+            if(!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره.'); isProcessingScan = false; return; }
             const { error } = await db.from('products').insert([{ name, price, category: 'وجبة', image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500' }]);
-            if(error) { alert('خطأ: ' + error.message); return; }
+            if(error) { alert('خطأ: ' + error.message); isProcessingScan = false; return; }
             document.getElementById('p-name').value = ''; document.getElementById('p-price').value = ''; document.getElementById('p-image').value = '';
             fetchAdminProducts(); alert('✅ تم إضافة المنتج بنجاح!');
         }
@@ -204,28 +222,36 @@
 
         async function handleScannedOrder(code) {
             const feedback = document.getElementById('scan-feedback');
-            // تنظيف الكود المستخرج لمعالجة أي مسافات زائدة
             const cleanCode = code.replace(/^.*#/, '').trim();
             
             const { data, error } = await db.from('orders').select('*').ilike('id', `%${cleanCode}%`).single();
             if(data && !error) {
                 if(data.status === 'pending_pickup') {
+                    // تحديث الطلب وإعطاء علامة الصح الفاجرة والتنبيه
                     await db.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders();
+                    
+                    // إظهار نافذة النجاح الكبيرة الفاجرة
+                    document.getElementById('popup-order-details').innerText = `الطلب: #${data.id} | الطالب: ${data.student_name} | الإجمالي: ${data.total} ج.م`;
+                    document.getElementById('success-popup').classList.remove('hidden');
+                    
                     feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
                     feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
                 } else {
                     feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-blue-100 text-blue-800";
                     feedback.innerText = `ℹ️ الطلب (${data.id}) مسلّم مسبقاً!`;
+                    isProcessingScan = false;
                 }
             } else {
                 feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ الكود (${cleanCode}) غير موجود في النظام!`;
+                feedback.innerText = `❌ الكود (${cleanCode}) غير موجود!`;
+                setTimeout(() => { isProcessingScan = false; }, 2000);
             }
-            setTimeout(() => { 
-                feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-50 text-emerald-700"; 
-                feedback.innerText = "الكاميرا جاهزة للماسح..."; 
-            }, 4000);
+        }
+
+        function closeSuccessPopup() {
+            document.getElementById('success-popup').classList.add('hidden');
+            isProcessingScan = false;
         }
     </script>
 </body>
