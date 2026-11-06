@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>كافتيريا الجامعة الذكية | طلبات الطلاب</title>
+    <title>مارشال ركن الشاورما | طلبات الطلاب</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { font-family: 'Tajawal', sans-serif; transition: all 0.3s ease; }
+        * { font-family: 'Tajawal', sans-serif; transition: all 0.2s ease; }
         .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeIn 0.4s ease forwards; }
@@ -21,16 +21,16 @@
     <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg shadow-amber-500/20">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg">
                     <i class="fa-solid fa-utensils"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base leading-tight text-white">كافتيريا الجامعة الذكية</h1>
-                    <p class="text-[11px] text-slate-400">اطلب من مكانك واستلم بالـ QR الفوري</p>
+                    <h1 class="font-black text-base leading-tight text-white">مارشال ركن الشاورما</h1>
+                    <p class="text-[11px] text-slate-400">اطلب وجبتك واستلم بالـ QR الفوري</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow-lg shadow-indigo-600/30">المنيو والطلب</button>
+                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg">المنيو والطلب</button>
                 <button type="button" onclick="switchTab('track')" id="nav-track" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer hover:bg-slate-700">سجل طلباتي والـ QR</button>
             </nav>
         </div>
@@ -39,25 +39,25 @@
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
         <section id="tab-menu" class="space-y-6 animate-fade">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 space-y-4">
-                    <h2 class="font-bold text-lg text-white flex items-center gap-2"><i class="fa-solid fa-burger text-amber-500"></i> منيو المأكولات المتاح</h2>
-                    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <p class="text-slate-400 text-xs py-12 col-span-2 text-center">جاري تحميل المنتجات...</p>
+                <div class="lg:col-span-2 space-y-6">
+                    <h2 class="font-black text-lg text-white flex items-center gap-2"><i class="fa-solid fa-burger text-amber-500"></i> قائمة المأكولات</h2>
+                    <div id="products-container" class="space-y-6">
+                        <p class="text-slate-400 text-xs py-12 text-center">جاري تحميل المنتجات...</p>
                     </div>
                 </div>
 
                 <div class="space-y-4">
                     <div class="glass-card text-slate-900 rounded-3xl p-5 shadow-2xl sticky top-20 space-y-4">
-                        <h2 class="font-bold text-base border-b pb-3 flex items-center justify-between">
+                        <h2 class="font-black text-base border-b pb-3 flex items-center justify-between">
                             <span><i class="fa-solid fa-cart-shopping text-indigo-600 ml-2"></i>سلة الطلبات</span>
-                            <span id="cart-count" class="bg-indigo-100 text-indigo-700 text-xs px-2.5 py-1 rounded-full font-black shadow-inner">0</span>
+                            <span id="cart-count" class="bg-indigo-100 text-indigo-700 text-xs px-2.5 py-1 rounded-full font-black">0</span>
                         </h2>
                         <div id="cart-items" class="space-y-2 max-h-44 overflow-y-auto"><p class="text-center text-slate-400 text-xs py-4">السلة فارغة</p></div>
                         <div class="space-y-3 pt-3 border-t">
-                            <div><label class="block text-xs font-bold text-slate-700 mb-1">اسم الطالب *</label><input type="text" id="student-name" placeholder="محمد أحمد" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 focus:bg-white focus:border-indigo-600 font-bold"></div>
-                            <div><label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (11 رقم) *</label><input type="tel" id="student-phone" maxlength="11" placeholder="01012345678" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 focus:bg-white focus:border-indigo-600 font-bold"></div>
+                            <div><label class="block text-xs font-bold text-slate-700 mb-1">اسم الطالب *</label><input type="text" id="student-name" placeholder="محمد أحمد" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold"></div>
+                            <div><label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (11 رقم) *</label><input type="tel" id="student-phone" maxlength="11" placeholder="01012345678" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold"></div>
                             <div class="pt-2 flex justify-between items-center font-bold text-slate-800"><span class="text-xs">الإجمالي:</span><span id="cart-total" class="text-lg text-amber-600 font-black">0 ج.م</span></div>
-                            <button type="button" onclick="submitOrder()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3.5 rounded-xl transition text-xs shadow-lg shadow-emerald-600/30 cursor-pointer flex items-center justify-center gap-2 transform active:scale-95"><i class="fa-solid fa-paper-plane"></i> إرسال الطلب وإصدار الـ QR</button>
+                            <button type="button" onclick="submitOrder()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-bold py-3.5 rounded-xl transition text-xs shadow-lg cursor-pointer flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane"></i> إرسال الطلب وإصدار الـ QR</button>
                         </div>
                     </div>
                 </div>
@@ -68,7 +68,7 @@
             <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-xl flex items-center justify-between">
                 <div>
                     <h3 class="font-black text-base text-slate-900"><i class="fa-solid fa-clock-rotate-left text-indigo-600 ml-2"></i> سجل طلباتك المحفوظة</h3>
-                    <p class="text-xs text-slate-500 mt-1">الطلبات النشطة تظهر بكود QR كبير وسريع، والطلبات القديمة تصغر وتتستر تلقائياً.</p>
+                    <p class="text-xs text-slate-500 mt-1">طلباتك النشطة تظهر بكود QR كبير، والطلبات القديمة تصغر تلقائياً.</p>
                 </div>
                 <button type="button" onclick="loadStudentOrders()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer shadow"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
@@ -89,26 +89,43 @@
         function switchTab(tab) {
             document.getElementById('tab-menu').classList.toggle('hidden', tab !== 'menu');
             document.getElementById('tab-track').classList.toggle('hidden', tab !== 'track');
-            document.getElementById('nav-menu').className = tab === 'menu' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow-lg shadow-indigo-600/30" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer hover:bg-slate-700";
-            document.getElementById('nav-track').className = tab === 'track' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow-lg shadow-indigo-600/30" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer hover:bg-slate-700";
+            document.getElementById('nav-menu').className = tab === 'menu' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            document.getElementById('nav-track').className = tab === 'track' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
             if(tab === 'track') loadStudentOrders();
         }
 
         async function fetchProducts() {
-            const grid = document.getElementById('products-grid');
+            const container = document.getElementById('products-container');
             const { data } = await db.from('products').select('*');
-            if(!data || data.length === 0) { grid.innerHTML = `<p class="text-slate-400 text-xs py-12 col-span-2 text-center">لا توجد منتجات مضافة.</p>`; return; }
+            if(!data || data.length === 0) { container.innerHTML = `<p class="text-slate-400 text-xs py-12 text-center">لا توجد منتجات مضافة حالياً.</p>`; return; }
             productsList = data;
-            grid.innerHTML = productsList.map(p => `
-                <div class="glass-card text-slate-900 rounded-3xl p-4 shadow-sm flex flex-col justify-between hover:shadow-xl transform hover:-translate-y-1">
-                    <div>
-                        <div class="h-36 bg-slate-200 rounded-2xl mb-3 overflow-hidden shadow-inner"><img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-full h-full object-cover"></div>
-                        <h3 class="font-black text-slate-900 text-base">${p.name}</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">${p.category || 'وجبة سريعة'}</p>
-                    </div>
-                    <div class="flex items-center justify-between mt-4 pt-3 border-t">
-                        <span class="font-black text-amber-600 text-base">${p.price} ج.م</span>
-                        <button type="button" onclick="addToCart('${p.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer shadow-md shadow-indigo-600/20 active:scale-95"><i class="fa-solid fa-plus ml-1"></i> إضافة</button>
+
+            // تجميع المنتجات حسب القسم (Category)
+            const categories = {};
+            productsList.forEach(p => {
+                const cat = p.category || 'أخرى';
+                if(!categories[cat]) categories[cat] = [];
+                categories[cat].push(p);
+            });
+
+            container.innerHTML = Object.keys(categories).map(cat => `
+                <div class="space-y-3">
+                    <h3 class="font-black text-base text-amber-500 border-b border-slate-800 pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-utensils text-xs"></i> ${cat}
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${categories[cat].map(p => `
+                            <div class="glass-card text-slate-900 rounded-3xl p-4 shadow-sm flex flex-col justify-between hover:shadow-xl">
+                                <div>
+                                    <div class="h-32 bg-slate-200 rounded-2xl mb-3 overflow-hidden shadow-inner"><img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-full h-full object-cover"></div>
+                                    <h4 class="font-black text-slate-900 text-sm">${p.name}</h4>
+                                </div>
+                                <div class="flex items-center justify-between mt-4 pt-3 border-t">
+                                    <span class="font-black text-amber-600 text-base">${p.price} ج.م</span>
+                                    <button type="button" onclick="addToCart('${p.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer shadow"><i class="fa-solid fa-plus ml-1"></i> إضافة</button>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `).join('');
@@ -129,7 +146,7 @@
             let total = 0, count = 0;
             container.innerHTML = cart.map((item, idx) => {
                 total += item.price * item.qty; count += item.qty;
-                return `<div class="flex justify-between items-center text-xs bg-slate-50 p-2.5 rounded-2xl border"><div><p class="font-bold text-slate-900">${item.name}</p><p class="text-slate-500">${item.price} × ${item.qty}</p></div><div class="flex items-center gap-1.5"><button type="button" onclick="cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(${idx},1); renderCart();" class="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded-xl font-black">-</button><span class="font-black px-1">${item.qty}</span><button type="button" onclick="cart[idx].qty++; renderCart();" class="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded-xl font-black">+</button></div></div>`;
+                return `<div class="flex justify-between items-center text-xs bg-slate-50 p-2.5 rounded-2xl border"><div><p class="font-bold text-slate-900">${item.name}</p><p class="text-slate-500">${item.price} × ${item.qty}</p></div><div class="flex items-center gap-1.5"><button type="button" onclick="cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(${idx},1); renderCart();" class="w-7 h-7 bg-slate-200 rounded-xl font-black">-</button><span class="font-black px-1">${item.qty}</span><button type="button" onclick="cart[idx].qty++; renderCart();" class="w-7 h-7 bg-slate-200 rounded-xl font-black">+</button></div></div>`;
             }).join('');
             totalEl.innerText = `${total} ج.م`; countEl.innerText = count;
         }
@@ -184,7 +201,6 @@
                             <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
                         </div>
                         <div class="flex flex-col items-center justify-center">
-                            <!-- إذا كان الطلب نشط: QR كبير وواضح جداً للكاميرا | إذا خلص: QR صغير وباهت -->
                             <div class="bg-white p-3 rounded-2xl border-2 shadow-md ${isPending ? 'w-40 h-40 scale-100 border-amber-500' : 'w-24 h-24 opacity-40 filter blur-[0.6px] border-slate-300'} flex items-center justify-center transition-all">
                                 <div id="qr-${o.id}"></div>
                             </div>
