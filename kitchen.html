@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الكاشير المحمية | POS</title>
+    <title>لوحة تحكم الكاشير | مارشال</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -23,7 +23,6 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
-    <!-- نافذة نجاح فاجرة جداً ومرعبة في الشياكة -->
     <div id="success-popup" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-5 shadow-2xl border-4 border-emerald-500 animate-epic">
             <div class="w-32 h-32 bg-emerald-100 text-emerald-600 rounded-full mx-auto flex items-center justify-center text-6xl shadow-2xl shadow-emerald-500/50">
@@ -34,7 +33,7 @@
                 <p class="text-xs text-slate-500 mt-1">الماسح التلقائي رصد الكود واعتمده فوراً</p>
             </div>
             <div id="popup-order-details" class="text-xs font-bold text-slate-800 bg-emerald-50 p-4 rounded-2xl border border-emerald-200 leading-relaxed space-y-1">--</div>
-            <button type="button" onclick="closeSuccessPopup()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 rounded-2xl text-sm shadow-xl cursor-pointer transform active:scale-95">متابعة مسح الطلبات التالية</button>
+            <button type="button" onclick="closeSuccessPopup()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-black py-4 rounded-2xl text-sm shadow-xl cursor-pointer">متابعة مسح الطلبات</button>
         </div>
     </div>
 
@@ -43,23 +42,22 @@
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-indigo-500">
             <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow"><i class="fa-solid fa-lock"></i></div>
             <h2 class="font-black text-xl text-slate-900">لوحة تحكم المشرف</h2>
-            <p class="text-xs text-slate-500">الرجاء إدخال رقم المرور السري للدخول (2529):</p>
-            <input type="password" id="admin-pass" placeholder="****" maxlength="6" class="w-full text-center text-xl tracking-widest p-3.5 rounded-xl border outline-none bg-slate-50 font-bold focus:border-indigo-600">
+            <p class="text-xs text-slate-500">أدخل رقم المرور السري للدخول (2529):</p>
+            <input type="password" id="admin-pass" placeholder="****" maxlength="6" class="w-full text-center text-xl tracking-widest p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
             <button type="button" onclick="verifyPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl text-xs shadow-lg cursor-pointer">دخول اللوحة</button>
         </div>
     </div>
 
-    <!-- محتوى لوحة الكاشير -->
     <div id="admin-content" class="hidden flex-1 flex flex-col">
         <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 shadow-xl">
             <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl shadow"><i class="fa-solid fa-cash-register"></i></div>
-                    <div><h1 class="font-bold text-base leading-tight">لوحة تحكم الكاشير</h1><p class="text-[11px] text-slate-400">الماسح الفائق والتحكم في المنيو</p></div>
+                    <div><h1 class="font-bold text-base leading-tight">لوحة تحكم الكاشير</h1><p class="text-[11px] text-slate-400">مارشال - إدارة المنيو والماسح</p></div>
                 </div>
                 <nav class="flex items-center gap-2">
                     <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow-lg">الطلبات والماسح</button>
-                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو</button>
+                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو والأقسام</button>
                 </nav>
             </div>
         </header>
@@ -69,11 +67,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="glass-card text-slate-900 p-4 rounded-3xl border-l-4 border-emerald-500 flex items-center justify-between shadow-md">
                         <div><p class="text-xs text-slate-500 font-bold">إجمالي المبيعات</p><h3 id="sales-amount" class="text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3></div>
-                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-xl shadow"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-wallet"></i></div>
                     </div>
                     <div class="glass-card text-slate-900 p-4 rounded-3xl border-l-4 border-indigo-500 flex items-center justify-between shadow-md">
                         <div><p class="text-xs text-slate-500 font-bold">الطلبات المسلمة</p><h3 id="completed-count" class="text-2xl font-black text-indigo-600 mt-1">0 طلب</h3></div>
-                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-xl shadow"><i class="fa-solid fa-check-double"></i></div>
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-check-double"></i></div>
                     </div>
                 </div>
 
@@ -81,31 +79,40 @@
                     <div class="glass-card text-slate-900 p-5 rounded-3xl shadow-xl space-y-4">
                         <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-bolt text-amber-500"></i> الماسح السريع الفائق</h2>
                         <p class="text-xs text-slate-500">مرر كود الـ QR أمام الكاميرا لتسليمه فوراً:</p>
-                        <div id="reader" class="rounded-2xl overflow-hidden border bg-black min-h-[280px] shadow-inner"></div>
-                        <div id="scan-feedback" class="text-center text-xs font-bold py-3 rounded-2xl bg-emerald-50 text-emerald-700 shadow-sm">⚡ الماسح جاهز للالتقاط السريع...</div>
+                        <div id="reader" class="rounded-2xl overflow-hidden border bg-black min-h-[280px]"></div>
+                        <div id="scan-feedback" class="text-center text-xs font-bold py-3 rounded-2xl bg-emerald-50 text-emerald-700 shadow-sm">⚡ الماسح جاهز للالتقاط...</div>
                     </div>
                     <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-3xl shadow-xl space-y-4">
                         <h2 class="font-bold text-base flex items-center justify-between">
                             <span><i class="fa-solid fa-list-check text-indigo-600 ml-1"></i> الطلبات الواردة</span>
-                            <button type="button" onclick="fetchAllOrders()" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl font-bold cursor-pointer shadow"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                            <button type="button" onclick="fetchAllOrders()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-xl font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> تحديث</button>
                         </h2>
                         <div id="kitchen-orders-list" class="space-y-3 max-h-[500px] overflow-y-auto"><p class="text-center text-slate-400 text-xs py-8">جاري التحميل...</p></div>
                     </div>
                 </div>
             </div>
 
+            <!-- لوحة إدارة وتعديل المنيو والأقسام -->
             <div id="view-menu-manager" class="hidden space-y-6">
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-bold text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-burger text-amber-500"></i> إضافة منتج جديد للمنيو</h2>
+                    <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-burger text-amber-500"></i> إضافة وجبة جديدة للقائمة</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
-                        <input type="text" id="p-name" placeholder="اسم الوجبة" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 focus:bg-white focus:border-indigo-600 font-bold">
-                        <input type="number" id="p-price" placeholder="السعر" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 focus:bg-white focus:border-indigo-600 font-bold">
-                        <input type="text" id="p-image" placeholder="رابط الصورة (Image URL)" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 focus:bg-white focus:border-indigo-600 font-bold">
-                        <button type="button" onclick="addNewProduct()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-3 rounded-xl shadow-lg cursor-pointer">إضافة للمنيو</button>
+                        <input type="text" id="p-name" placeholder="اسم الوجبة (مثال: شاورما عربي)" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <select id="p-category" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                            <option value="ركن الشاورما">ركن الشاورما</option>
+                            <option value="ركن الوجبات">ركن الوجبات</option>
+                            <option value="ركن السندوتشات">ركن السندوتشات</option>
+                            <option value="ركن البطاطس">ركن البطاطس</option>
+                            <option value="ركن الصوصات">ركن الصوصات</option>
+                        </select>
+                        <input type="number" id="p-price" placeholder="السعر (ج.م)" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <input type="text" id="p-image" placeholder="رابط الصورة (اختياري)" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
+                    <button type="button" onclick="addNewProduct()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-lg cursor-pointer">إضافة للمنيو الآن</button>
                 </div>
+
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-bold text-lg">المنتجات المعروضة</h2>
+                    <h2 class="font-black text-lg">المنتجات الحالية في المنيو</h2>
                     <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-slate-400 text-xs py-6">لا توجد منتجات.</p></div>
                 </div>
             </div>
@@ -143,7 +150,7 @@
                 document.getElementById('admin-content').classList.remove('hidden');
                 fetchAllOrders(); fetchAdminProducts(); startDefaultScanner();
             } else {
-                alert('كلمة المرور غير صحيحة! (الكلمة الصحيحة: 2529)');
+                alert('كلمة المرور غير صحيحة! (الكلمة: 2529)');
             }
         }
 
@@ -162,7 +169,6 @@
             try {
                 if(!html5QrCode) html5QrCode = new Html5Qrcode("reader");
                 if(!html5QrCode.isScanning) {
-                    // إعدادات فائقة السرعة لالتقاط الـ QR في زحمة المطعم بدون توقف
                     await html5QrCode.start(
                         { facingMode: "environment" }, 
                         { fps: 30, qrbox: { width: 250, height: 250 }, experimentalFeatures: { useBarCodeDetectorIfSupported: true } }, 
@@ -187,7 +193,7 @@
             const container = document.getElementById('kitchen-orders-list');
             if(orders.length === 0) { container.innerHTML = `<p class="text-center text-slate-400 text-xs py-6">لا توجد طلبات حالياً</p>`; return; }
             container.innerHTML = orders.map(o => `
-                <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 hover:shadow-md">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div class="space-y-1">
                         <div class="flex items-center gap-2"><span class="font-black text-sm text-slate-900">#${o.id}</span><span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${o.status === 'pending_pickup' ? '🟡 قيد الانتظار' : '✅ تم الاستلام'}</span></div>
                         <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
@@ -218,7 +224,14 @@
             if(productsList.length === 0) { list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة.</p>`; return; }
             list.innerHTML = productsList.map(p => `
                 <div class="bg-slate-50 p-3.5 rounded-2xl border flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-3"><img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-12 h-12 object-cover rounded-xl shadow"><div><p class="font-bold text-xs text-slate-900">${p.name}</p><p class="text-amber-600 font-bold text-xs">${p.price} ج.م</p></div></div>
+                    <div class="flex items-center gap-3">
+                        <img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-12 h-12 object-cover rounded-xl shadow">
+                        <div>
+                            <p class="font-black text-xs text-slate-900">${p.name}</p>
+                            <p class="text-[10px] text-indigo-600 font-bold">${p.category || 'عام'}</p>
+                            <p class="text-amber-600 font-bold text-xs">${p.price} ج.م</p>
+                        </div>
+                    </div>
                     <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-600 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer shadow"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
@@ -226,17 +239,23 @@
 
         async function addNewProduct() {
             const name = document.getElementById('p-name').value.trim();
+            const category = document.getElementById('p-category').value;
             const price = parseFloat(document.getElementById('p-price').value);
             const image_url = document.getElementById('p-image').value.trim();
-            if(!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره.'); isProcessingScan = false; return; }
-            const { error } = await db.from('products').insert([{ name, price, category: 'وجبة', image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500' }]);
+            if(!name || isNaN(price)) { alert('ادخل اسم الوجبة والسعر بشكل صحيح.'); isProcessingScan = false; return; }
+            
+            const { error } = await db.from('products').insert([{ name, category, price, image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500' }]);
             if(error) { alert('خطأ: ' + error.message); isProcessingScan = false; return; }
-            document.getElementById('p-name').value = ''; document.getElementById('p-price').value = ''; document.getElementById('p-image').value = '';
-            fetchAdminProducts(); alert('✅ تم إضافة المنتج بنجاح!');
+            
+            document.getElementById('p-name').value = ''; 
+            document.getElementById('p-price').value = ''; 
+            document.getElementById('p-image').value = '';
+            fetchAdminProducts(); 
+            alert('✅ تم إضافة الوجبة إلى القسم بنجاح!');
         }
 
         async function deleteProduct(id) {
-            if(!confirm('هل أنت متأكد من الحذف؟')) return;
+            if(!confirm('هل أنت متأكد من حذف هذه الوجبة؟')) return;
             await db.from('products').delete().eq('id', id);
             fetchAdminProducts();
         }
@@ -250,13 +269,9 @@
                 if(data.status === 'pending_pickup') {
                     await db.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders();
-
-                    // 1. صوت رنة النجاح
                     playSuccessBeep();
-                    // 2. هزاز الجهاز لو مدعوم
                     if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
 
-                    // 3. عرض شاشة النجاح الضخمة الفاجرة
                     document.getElementById('popup-order-details').innerHTML = `
                         <strong>رقم الطلب:</strong> #${data.id}<br>
                         <strong>اسم الطالب:</strong> ${data.student_name}<br>
@@ -265,7 +280,6 @@
                         <strong>الإجمالي:</strong> <span class="text-amber-600 font-black">${data.total} ج.م</span>
                     `;
                     document.getElementById('success-popup').classList.remove('hidden');
-
                     feedback.className = "text-center text-xs font-bold py-3 rounded-2xl bg-emerald-100 text-emerald-800 shadow-sm";
                     feedback.innerText = `✅ تم تسليم الطلب (${data.id}) وتنبيه الكاشير بنجاح!`;
                 } else {
