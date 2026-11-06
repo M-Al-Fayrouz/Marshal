@@ -109,7 +109,16 @@
     <script>
         const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // تعريف متغير الاتصال باسم db لتجنب تضارب الأسماء مع المكتبة
+        let db = null;
+        try {
+            if (window.supabase) {
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch(e) {
+            console.error("Supabase init error:", e);
+        }
 
         let productsList = [];
         let orders = [];
@@ -121,16 +130,21 @@
             fetchAllOrders();
             fetchAdminProducts();
 
-            // الاستماع للطلبات الجديدة لحظياً عبر Supabase Realtime وتشغيل تنبيه صوتي
-            supabase.channel('public:orders')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
-                    playNotificationSound();
-                    fetchAllOrders();
-                })
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
-                    fetchAllOrders();
-                })
-                .subscribe();
+            if (db) {
+                try {
+                    db.channel('public:orders')
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+                            playNotificationSound();
+                            fetchAllOrders();
+                        })
+                        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
+                            fetchAllOrders();
+                        })
+                        .subscribe();
+                } catch(e) {
+                    console.error("Realtime subscription error:", e);
+                }
+            }
         });
 
         // تشغيل إشعار صوتي فوري عند وصول طلب جديد
@@ -140,7 +154,7 @@
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime); // نغمة E5 عالية ومسموعة
+                oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime);
                 gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
@@ -176,11 +190,16 @@
         }
 
         async function fetchAllOrders() {
-            const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-            if (!error) {
-                orders = data || [];
-                renderKitchenOrders();
-                updateSalesStats();
+            if (!db) return;
+            try {
+                const { data, error } = await db.from('orders').select('*').order('created_at', { ascending: false });
+                if (!error) {
+                    orders = data || [];
+                    renderKitchenOrders();
+                    updateSalesStats();
+                }
+            } catch(e) {
+                console.error("Fetch orders error:", e);
             }
         }
 
@@ -198,29 +217,34 @@
         }
 
         async function fetchAdminProducts() {
-            const { data, error } = await supabase.from('products').select('*');
-            if(error) {
-                console.error("Error fetching products:", error);
-                return;
-            }
-            productsList = data || [];
-            const list = document.getElementById('admin-products-list');
-            if (productsList.length === 0) {
-                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. أضف منتجاتك من الأعلى.</p>`;
-                return;
-            }
-            list.innerHTML = productsList.map(p => `
-                <div class="bg-slate-50 p-3 rounded-xl border flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-12 h-12 object-cover rounded-lg">
-                        <div>
-                            <p class="font-bold text-xs text-slate-900">${p.name}</p>
-                            <p class="text-amber-600 font-bold text-xs">${p.price} ج.م</p>
+            if (!db) return;
+            try {
+                const { data, error } = await db.from('products').select('*');
+                if(error) {
+                    console.error("Error fetching products:", error);
+                    return;
+                }
+                productsList = data || [];
+                const list = document.getElementById('admin-products-list');
+                if (productsList.length === 0) {
+                    list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. أضف منتجاتك من الأعلى.</p>`;
+                    return;
+                }
+                list.innerHTML = productsList.map(p => `
+                    <div class="bg-slate-50 p-3 rounded-xl border flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-12 h-12 object-cover rounded-lg">
+                            <div>
+                                <p class="font-bold text-xs text-slate-900">${p.name}</p>
+                                <p class="text-amber-600 font-bold text-xs">${p.price} ج.م</p>
+                            </div>
                         </div>
+                        <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                    <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            `).join('');
+                `).join('');
+            } catch(e) {
+                console.error("Admin products exception:", e);
+            }
         }
 
         async function addNewProduct() {
@@ -232,29 +256,34 @@
                 alert('الرجاء ادخال اسم المنتج وسعره بشكل صحيح.'); 
                 return; 
             }
+            if (!db) { alert('قاعدة البيانات غير متصلة.'); return; }
 
-            const { error } = await supabase.from('products').insert([{
-                name: name,
-                price: price,
-                category: 'وجبة سريعة',
-                image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
-            }]);
+            try {
+                const { error } = await db.from('products').insert([{
+                    name: name,
+                    price: price,
+                    category: 'وجبة سريعة',
+                    image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
+                }]);
 
-            if (error) { 
-                alert('خطأ في قاعدة البيانات (تأكد من إلغاء RLS في جدول products): ' + error.message); 
-                return; 
+                if (error) { 
+                    alert('خطأ في قاعدة البيانات (تأكد من إلغاء RLS في Supabase): ' + error.message); 
+                    return; 
+                }
+
+                document.getElementById('p-name').value = '';
+                document.getElementById('p-price').value = '';
+                document.getElementById('p-image').value = '';
+                fetchAdminProducts();
+                alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً للطلاب فوراً!');
+            } catch(err) {
+                alert('حدث خطأ أثناء إضافة المنتج.');
             }
-
-            document.getElementById('p-name').value = '';
-            document.getElementById('p-price').value = '';
-            document.getElementById('p-image').value = '';
-            fetchAdminProducts();
-            alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً للطلاب فوراً!');
         }
 
         async function deleteProduct(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا المنتج من المنيو؟')) return;
-            await supabase.from('products').delete().eq('id', id);
+            if (!confirm('هل أنت متأكد من حذف هذا المنتج من المنيو؟') || !db) return;
+            await db.from('products').delete().eq('id', id);
             fetchAdminProducts();
         }
 
@@ -296,7 +325,8 @@
         }
 
         async function manualComplete(orderId) {
-            await supabase.from('orders').update({ status: 'completed' }).eq('id', orderId);
+            if (!db) return;
+            await db.from('orders').update({ status: 'completed' }).eq('id', orderId);
             fetchAllOrders();
         }
 
@@ -344,8 +374,10 @@
             } catch (err) {
                 console.error("Camera start error:", err);
                 isScanningActive = false;
+                toggleBtn.className = "text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-power-off ml-1"></i> تشغيل الكاميرا`;
                 feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = "تعذر تشغيل الكاميرا (تأكد من السماح بإذن الكاميرا من المتصفح).";
+                feedback.innerText = "تعذر تشغيل الكاميرا (تأكد من إذن الكاميرا من المتصفح).";
             }
         }
 
@@ -371,22 +403,29 @@
 
         async function handleScannedOrder(code) {
             const feedback = document.getElementById('scan-feedback');
-            const { data, error } = await supabase.from('orders').select('*').ilike('id', code).single();
+            if (!db) return;
 
-            if (data && !error) {
-                if (data.status === 'pending_pickup') {
-                    await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
-                    playNotificationSound();
-                    fetchAllOrders();
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
+            try {
+                const { data, error } = await db.from('orders').select('*').ilike('id', code).single();
+
+                if (data && !error) {
+                    if (data.status === 'pending_pickup') {
+                        await db.from('orders').update({ status: 'completed' }).eq('id', data.id);
+                        playNotificationSound();
+                        fetchAllOrders();
+                        feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
+                        feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
+                    } else {
+                        feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
+                        feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
+                    }
                 } else {
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
-                    feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
+                    feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
                 }
-            } else {
+            } catch(e) {
                 feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
+                feedback.innerText = `❌ حدث خطأ أثناء التحقق من الطلب.`;
             }
 
             setTimeout(() => {
