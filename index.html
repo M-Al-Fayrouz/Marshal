@@ -3,172 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مارشال ركن الشاورما | طلبات الطلاب</title>
+    <title>مارشال - ركن الشاورما | طلبات الطلاب</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { font-family: 'Tajawal', sans-serif; transition: all 0.2s ease; }
-        .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeIn 0.4s ease forwards; }
+        * { font-family: 'Tajawal', sans-serif; transition: all 0.2s ease; scroll-behavior: smooth; }
+        .glass-card { background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
-    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <!-- الهيدر الرئيسي -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-2xl">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg">
-                    <i class="fa-solid fa-utensils"></i>
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center font-black text-2xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-fire"></i>
                 </div>
                 <div>
-                    <h1 class="font-black text-base leading-tight text-white">مارشال ركن الشاورما</h1>
-                    <p class="text-[11px] text-slate-400">اطلب وجبتك واستلم بالـ QR الفوري</p>
+                    <h1 class="font-black text-base text-white leading-tight">مارشال - ركن الشاورما</h1>
+                    <p class="text-[11px] text-amber-400 font-bold">المنيو الرقمي السريع</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg">المنيو والطلب</button>
-                <button type="button" onclick="switchTab('track')" id="nav-track" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer hover:bg-slate-700">سجل طلباتي والـ QR</button>
+                <button type="button" onclick="switchMainTab('menu')" id="btn-tab-menu" class="px-4 py-2 rounded-xl font-black text-xs bg-amber-500 text-slate-950 shadow-lg cursor-pointer">المنيو</button>
+                <button type="button" onclick="switchMainTab('track')" id="btn-tab-track" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer hover:bg-slate-700">طلباتي والـ QR</button>
             </nav>
+        </div>
+
+        <!-- شريط التنقل السريع بين الأقسام (تنسيق موبايل ممتاز) -->
+        <div id="category-nav-bar" class="bg-slate-900/90 border-t border-slate-800/80 px-4 py-2.5 overflow-x-auto no-scrollbar flex items-center gap-2">
+            <button onclick="scrollToSection('sec-shawarma')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500 hover:text-slate-950">🔥 ركن الشاورما</button>
+            <button onclick="scrollToSection('sec-meals')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🍱 ركن الوجبات</button>
+            <button onclick="scrollToSection('sec-sandwiches')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🥪 ركن السندوتشات</button>
+            <button onclick="scrollToSection('sec-fries')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🍟 ركن البطاطس</button>
+            <button onclick="scrollToSection('sec-sauces')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🥣 ركن الصوصات</button>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
-        <section id="tab-menu" class="space-y-6 animate-fade">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="flex items-center justify-between">
-                        <h2 class="font-black text-lg text-white flex items-center gap-2"><i class="fa-solid fa-burger text-amber-500"></i> قائمة المأكولات (المنيو الرسمي)</h2>
-                        <button type="button" onclick="loadMarshallMenu()" class="text-xs bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 px-3 py-1.5 rounded-xl font-bold cursor-pointer border border-amber-500/30"><i class="fa-solid fa-utensils ml-1"></i> تحميل منيو مارشال الأصلي</button>
-                    </div>
-                    <div id="products-container" class="space-y-6">
-                        <p class="text-slate-400 text-xs py-12 text-center">جاري تحميل المنيو...</p>
-                    </div>
-                </div>
+    <main class="max-w-4xl mx-auto px-4 py-6 flex-1 w-full space-y-8">
+        
+        <!-- صفحة المنيو -->
+        <section id="main-menu-sec" class="space-y-8">
+            <div id="menu-sections-container" class="space-y-8">
+                <p class="text-center text-slate-400 text-xs py-12">جاري تحميل المنيو الأسطوري...</p>
+            </div>
 
-                <div class="space-y-4">
-                    <div class="glass-card text-slate-900 rounded-3xl p-5 shadow-2xl sticky top-20 space-y-4">
-                        <h2 class="font-black text-base border-b pb-3 flex items-center justify-between">
-                            <span><i class="fa-solid fa-cart-shopping text-indigo-600 ml-2"></i>سلة الطلبات</span>
-                            <span id="cart-count" class="bg-indigo-100 text-indigo-700 text-xs px-2.5 py-1 rounded-full font-black">0</span>
-                        </h2>
-                        <div id="cart-items" class="space-y-2 max-h-44 overflow-y-auto"><p class="text-center text-slate-400 text-xs py-4">السلة فارغة</p></div>
-                        <div class="space-y-3 pt-3 border-t">
-                            <div><label class="block text-xs font-bold text-slate-700 mb-1">اسم الطالب *</label><input type="text" id="student-name" placeholder="محمد أحمد" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold"></div>
-                            <div><label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (11 رقم) *</label><input type="tel" id="student-phone" maxlength="11" placeholder="01012345678" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold"></div>
-                            <div class="pt-2 flex justify-between items-center font-bold text-slate-800"><span class="text-xs">الإجمالي:</span><span id="cart-total" class="text-lg text-amber-600 font-black">0 ج.م</span></div>
-                            <button type="button" onclick="submitOrder()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-bold py-3.5 rounded-xl transition text-xs shadow-lg cursor-pointer flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane"></i> إرسال الطلب وإصدار الـ QR</button>
-                        </div>
+            <!-- السلة المثبتة تحت في الموبايل -->
+            <div class="glass-card text-slate-900 rounded-3xl p-5 shadow-2xl space-y-4 border-2 border-amber-400">
+                <h2 class="font-black text-base border-b pb-3 flex items-center justify-between">
+                    <span><i class="fa-solid fa-cart-shopping text-amber-600 ml-2"></i> سلة طلبك</span>
+                    <span id="cart-count" class="bg-amber-500 text-slate-950 text-xs px-3 py-0.5 rounded-full font-black">0</span>
+                </h2>
+                <div id="cart-items" class="space-y-2 max-h-44 overflow-y-auto"><p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك الأسطورية!</p></div>
+                <div class="space-y-3 pt-3 border-t">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input type="text" id="student-name" placeholder="اسمك الكريم *" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <input type="tel" id="student-phone" maxlength="11" placeholder="رقم الهاتف (11 رقم) *" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
+                    <div class="flex justify-between items-center font-black text-slate-900 pt-1">
+                        <span class="text-xs">المبلغ الإجمالي:</span>
+                        <span id="cart-total" class="text-xl text-amber-600">0 ج.م</span>
+                    </div>
+                    <button type="button" onclick="promptSaucesModal()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-black py-4 rounded-2xl text-xs shadow-xl cursor-pointer flex items-center justify-center gap-2 transform active:scale-95">
+                        <i class="fa-solid fa-circle-check text-sm"></i> تأكيد الطلب وإصدار كود الـ QR
+                    </button>
                 </div>
             </div>
         </section>
 
-        <section id="tab-track" class="hidden max-w-3xl mx-auto space-y-6 animate-fade">
+        <!-- صفحة سجل الطلبات -->
+        <section id="main-track-sec" class="hidden space-y-6">
             <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-xl flex items-center justify-between">
                 <div>
-                    <h3 class="font-black text-base text-slate-900"><i class="fa-solid fa-clock-rotate-left text-indigo-600 ml-2"></i> سجل طلباتك المحفوظة</h3>
-                    <p class="text-xs text-slate-500 mt-1">طلباتك النشطة تظهر بكود QR كبير، والطلبات القديمة تصغر تلقائياً.</p>
+                    <h3 class="font-black text-base text-slate-900"><i class="fa-solid fa-qrcode text-indigo-600 ml-2"></i> أكواد الـ QR والطلبات الحالية</h3>
+                    <p class="text-xs text-slate-500 mt-1">عرض الكود النشط للكاشير لاستلام الوجبة فوراً.</p>
                 </div>
-                <button type="button" onclick="loadStudentOrders()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer shadow"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                <button type="button" onclick="loadStudentOrders()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer shadow"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
             <div id="student-orders-container" class="space-y-4">
-                <p class="text-center text-slate-400 text-xs py-8">لا توجد طلبات مسجلة.</p>
+                <p class="text-center text-slate-400 text-xs py-8">لا توجد طلبات محفوظة حالياً.</p>
             </div>
         </section>
     </main>
+
+    <!-- نافذة اختيار خيارات العيش (سوري / فينو / تورتيلا) -->
+    <div id="bread-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card text-slate-900 p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl border-2 border-amber-500">
+            <h3 id="modal-item-title" class="font-black text-base text-slate-900 border-b pb-2">اختر نوع العيش</h3>
+            <div id="bread-options-container" class="space-y-2"></div>
+            <button onclick="closeBreadModal()" class="w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة اقتراح الصوصات قبل إنهاء الطلب -->
+    <div id="sauces-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card text-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 shadow-2xl border-2 border-emerald-500">
+            <div class="text-center space-y-1">
+                <i class="fa-solid fa-mortar-pestle text-3xl text-amber-500"></i>
+                <h3 class="font-black text-lg text-slate-900">تحب تضيف صوصات مع طلبتك؟ 🥣</h3>
+                <p class="text-xs text-slate-500">اختر من ركن الصوصات الطازجة لإكمال طعم الوجبة:</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                <button onclick="quickAddSauce('ثوميه', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>ثومية</span> <span class="text-amber-600">15 ج.م</span></button>
+                <button onclick="quickAddSauce('ثوميه حاره', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>ثومية حارة</span> <span class="text-amber-600">15 ج.م</span></button>
+                <button onclick="quickAddSauce('طحينه', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>طحينة</span> <span class="text-amber-600">15 ج.م</span></button>
+                <button onclick="quickAddSauce('صوص حار', 10)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>صوص حار</span> <span class="text-amber-600">10 ج.م</span></button>
+            </div>
+            <button onclick="finalSubmitOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-xs shadow-lg cursor-pointer">استمرار وإصدار الـ QR الآن 🚀</button>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
         let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let cart = [], productsList = [];
+        let selectedSandwichItem = null;
 
-        // المنيو الأصلي المبعوث من الصورة (مارشال ركن الشاورما)
-        const marshallDefaultMenu = [
-            // ركن الشاورما
-            { id: 'm1', name: 'شاورما فراخ', price: 120, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
-            { id: 'm2', name: 'شاورما فراخ مشروم', price: 130, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
-            { id: 'm3', name: 'شاورما فراخ موزارايلا', price: 130, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
-            { id: 'm4', name: 'شاورما فراخ بطاطس', price: 125, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
-            { id: 'm5', name: 'شاورما فراخ ايطاليانو', price: 130, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
-            
-            // ركن الوجبات
-            { id: 'm6', name: 'شاورما عربي', price: 160, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
-            { id: 'm7', name: 'شاورما ماريا', price: 170, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
-            { id: 'm8', name: 'شاورما تركي', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
-            { id: 'm9', name: 'شاورما ايطالي', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
-            { id: 'm10', name: 'صدور دجاج', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
-            { id: 'm11', name: 'شيش طاووق', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
+        // صور كفرات خرافية ثابتة لكل قسم بدون صور عشوائية بائسة
+        const categoryBanners = {
+            'ركن الشاورما': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80',
+            'ركن الوجبات': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&q=80',
+            'ركن السندوتشات': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80',
+            'ركن البطاطس': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80',
+            'ركن الصوصات': 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=800&q=80'
+        };
 
-            // ركن السندوتشات
-            { id: 'm12', name: 'كريسبي', price: 120, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm13', name: 'زنجر', price: 120, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm14', name: 'فاهيتا', price: 120, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm15', name: 'صدور دجاج مشويه', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm16', name: 'هوت دوج', price: 100, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm17', name: 'كفته', price: 90, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm18', name: 'مشكل لحوم', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm19', name: 'مشكل دجاج', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm20', name: 'سوبر كرأنشي', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm21', name: 'برجر لحم فريش', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm22', name: 'برجر لحم فريش دوبل', price: 180, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm23', name: 'تويستر زنجر', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm24', name: 'تويستر كرسبي', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'm25', name: 'كاسديا', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-
-            // ركن البطاطس
-            { id: 'm26', name: 'ساندوتش فلافل سوري', price: 40, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm27', name: 'سوري عادي', price: 45, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm28', name: 'سوري عادي تشيز', price: 55, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm29', name: 'فينو عادي', price: 70, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm30', name: 'فينو تشيز', price: 80, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm31', name: 'باكيت صغير صوصات', price: 45, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm32', name: 'باكيت كبير صوصات', price: 55, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm33', name: 'باكيت رنش صغير', price: 60, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm34', name: 'باكيت رنش كبير', price: 70, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm35', name: 'باكيت صغير تكساس', price: 60, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm36', name: 'باكيت كبير تكساس', price: 70, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm37', name: 'باكيت زنجر', price: 115, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm38', name: 'باكيت شاورما', price: 110, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm39', name: 'اضافة شيدر', price: 10, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-            { id: 'm40', name: 'اضافة موزاريلا', price: 10, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
-
-            // ركن الصوصات
-            { id: 'm41', name: 'ثوميه', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
-            { id: 'm42', name: 'ثوميه حاره', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
-            { id: 'm43', name: 'طحينه', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
-            { id: 'm44', name: 'صوص حار', price: 10, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
-            { id: 'm45', name: 'شيدر', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
-            { id: 'm46', name: 'تكساس', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
-            { id: 'm47', name: 'رانشي', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
-            { id: 'm48', name: 'باربيكيو', price: 10, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' }
-        ];
+        const categorySectionIds = {
+            'ركن الشاورما': 'sec-shawarma',
+            'ركن الوجبات': 'sec-meals',
+            'ركن السندوتشات': 'sec-sandwiches',
+            'ركن البطاطس': 'sec-fries',
+            'ركن الصوصات': 'sec-sauces'
+        };
 
         window.addEventListener('DOMContentLoaded', () => { fetchProducts(); loadStudentOrders(); });
 
-        function switchTab(tab) {
-            document.getElementById('tab-menu').classList.toggle('hidden', tab !== 'menu');
-            document.getElementById('tab-track').classList.toggle('hidden', tab !== 'track');
-            document.getElementById('nav-menu').className = tab === 'menu' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
-            document.getElementById('nav-track').className = tab === 'track' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+        function switchMainTab(tab) {
+            document.getElementById('main-menu-sec').classList.toggle('hidden', tab !== 'menu');
+            document.getElementById('main-track-sec').classList.toggle('hidden', tab !== 'track');
+            document.getElementById('category-nav-bar').classList.toggle('hidden', tab !== 'menu');
+            document.getElementById('btn-tab-menu').className = tab === 'menu' ? "px-4 py-2 rounded-xl font-black text-xs bg-amber-500 text-slate-950 shadow-lg cursor-pointer" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            document.getElementById('btn-tab-track').className = tab === 'track' ? "px-4 py-2 rounded-xl font-black text-xs bg-amber-500 text-slate-950 shadow-lg cursor-pointer" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
             if(tab === 'track') loadStudentOrders();
         }
 
-        async function fetchProducts() {
-            const container = document.getElementById('products-container');
-            try {
-                const { data } = await db.from('products').select('*');
-                // لو قاعدة البيانات فاضية أو فيها منتجات، بنعرض المنهج الرسمي أو المحدث من Supabase
-                productsList = (data && data.length > 0) ? data : marshallDefaultMenu;
-            } catch(e) {
-                productsList = marshallDefaultMenu;
-            }
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if(el) el.scrollIntoView({ behavior: 'smooth' });
+        }
 
-            // تجميع المنتجات حسب القسم (Category)
+        async function fetchProducts() {
+            const container = document.getElementById('menu-sections-container');
+            const { data } = await db.from('products').select('*');
+            if(!data || data.length === 0) { 
+                container.innerHTML = `<div class="text-center py-12"><p class="text-amber-400 font-bold text-sm">المنيو غير محمل بعد في Supabase.</p><p class="text-xs text-slate-400 mt-1">افتح لوحة الإدارة واضغط زرار "رفع منيو مارشال الكامل".</p></div>`; 
+                return; 
+            }
+            productsList = data;
+
             const categories = {};
             productsList.forEach(p => {
                 const cat = p.category || 'ركن الوجبات';
@@ -177,21 +176,26 @@
             });
 
             container.innerHTML = Object.keys(categories).map(cat => `
-                <div class="space-y-3">
-                    <h3 class="font-black text-base text-amber-400 border-b border-slate-800 pb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-utensils text-xs"></i> ${cat}
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div id="${categorySectionIds[cat] || 'sec-gen'}" class="space-y-4">
+                    <!-- كفر القسم الفاجر -->
+                    <div class="relative h-36 rounded-3xl overflow-hidden shadow-xl border border-slate-800">
+                        <img src="${categoryBanners[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex items-end p-4">
+                            <h2 class="font-black text-xl text-white drop-shadow-md">${cat}</h2>
+                        </div>
+                    </div>
+
+                    <!-- قائمة أصناف القسم (نصية وأنيقة بدون صور صغيرة تشوه المظهر) -->
+                    <div class="bg-slate-900 rounded-3xl p-3 border border-slate-800 space-y-2">
                         ${categories[cat].map(p => `
-                            <div class="glass-card text-slate-900 rounded-3xl p-4 shadow-sm flex flex-col justify-between hover:shadow-xl">
+                            <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between hover:border-amber-500/50">
                                 <div>
-                                    <div class="h-28 bg-slate-200 rounded-2xl mb-3 overflow-hidden shadow-inner"><img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-full h-full object-cover"></div>
-                                    <h4 class="font-black text-slate-900 text-sm">${p.name}</h4>
+                                    <h4 class="font-bold text-slate-100 text-sm">${p.name}</h4>
+                                    <p class="text-xs text-amber-500 font-black mt-0.5">${p.price} ج.م</p>
                                 </div>
-                                <div class="flex items-center justify-between mt-4 pt-3 border-t">
-                                    <span class="font-black text-amber-600 text-base">${p.price} ج.م</span>
-                                    <button type="button" onclick="addToCart('${p.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer shadow"><i class="fa-solid fa-plus ml-1"></i> إضافة</button>
-                                </div>
+                                <button type="button" onclick="handleItemClick('${p.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-4 py-2 rounded-xl shadow-md cursor-pointer active:scale-95">
+                                    <i class="fa-solid fa-plus ml-1"></i> إضافة
+                                </button>
                             </div>
                         `).join('')}
                     </div>
@@ -199,27 +203,60 @@
             `).join('');
         }
 
-        async function loadMarshallMenu() {
-            if(!confirm('هل تريد حقاً استيراد المنيو الأصلي لمارشال إلى قاعدة البيانات؟')) return;
-            for(let item of marshallDefaultMenu) {
-                await db.from('products').insert([{ name: item.name, category: item.category, price: item.price, image_url: item.image_url }]);
+        function handleItemClick(id) {
+            const item = productsList.find(p => p.id == id);
+            if(!item) return;
+
+            // لو ساندوتش يحتاج اختيار نوع العيش
+            if(item.category === 'ركن السندوتشات') {
+                openBreadModal(item);
+            } else if(item.category === 'ركن البطاطس') {
+                // خيارات البطاطس والإضافات
+                const addCheese = confirm(`هل تريد إضافة شيدر أو موتزاريللا (+10 ج.م) لساندوتش ${item.name}؟`);
+                const price = addCheese ? item.price + 10 : item.price;
+                const name = addCheese ? `${item.name} (+جبنة)` : item.name;
+                addToCartDirect(item.id, name, price);
+            } else {
+                addToCartDirect(item.id, item.name, item.price);
             }
-            alert('✅ تم تحميل وتعبئة المنيو الأصلي بنجاح!');
-            fetchProducts();
         }
 
-        function addToCart(id) {
-            const prod = productsList.find(p => p.id == id);
-            if(!prod) return;
-            const exist = cart.find(item => item.id == id);
-            if(exist) exist.qty += 1; else cart.push({ id: prod.id, name: prod.name, price: prod.price, qty: 1 });
+        function openBreadModal(item) {
+            selectedSandwichItem = item;
+            document.getElementById('modal-item-title').innerText = `اختر نوع الخبز لـ (${item.name})`;
+            const container = document.getElementById('bread-options-container');
+            
+            // أسعار أنواع العيش المحددة في المنيو
+            container.innerHTML = `
+                <button onclick="selectBread('سوري', ${item.price})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between"><span>عيش سوري</span> <span>${item.price} ج.م</span></button>
+                <button onclick="selectBread('فينو', ${item.price + 10})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between"><span>عيش فينو</span> <span>${item.price + 10} ج.م</span></button>
+                <button onclick="selectBread('تورتيلا', ${item.price + 10})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between"><span>عيش تورتيلا</span> <span>${item.price + 10} ج.م</span></button>
+            `;
+            document.getElementById('bread-modal').classList.remove('hidden');
+        }
+
+        function selectBread(type, price) {
+            if(!selectedSandwichItem) return;
+            const fullName = `${selectedSandwichItem.name} (${type})`;
+            addToCartDirect(selectedSandwichItem.id, fullName, price);
+            closeBreadModal();
+        }
+
+        function closeBreadModal() {
+            document.getElementById('bread-modal').classList.add('hidden');
+        }
+
+        function addToCartDirect(id, name, price) {
+            const exist = cart.find(item => item.name === name);
+            if(exist) exist.qty += 1; 
+            else cart.push({ id, name, price, qty: 1 });
             renderCart();
         }
 
         function renderCart() {
             const container = document.getElementById('cart-items');
             const totalEl = document.getElementById('cart-total'), countEl = document.getElementById('cart-count');
-            if(cart.length === 0) { container.innerHTML = `<p class="text-center text-slate-400 text-xs py-4">السلة فارغة</p>`; totalEl.innerText = `0 ج.م`; countEl.innerText = `0`; return; }
+            if(cart.length === 0) { container.innerHTML = `<p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك الأسطورية!</p>`; totalEl.innerText = `0 ج.م`; countEl.innerText = `0`; return; }
             let total = 0, count = 0;
             container.innerHTML = cart.map((item, idx) => {
                 total += item.price * item.qty; count += item.qty;
@@ -228,12 +265,23 @@
             totalEl.innerText = `${total} ج.م`; countEl.innerText = count;
         }
 
-        async function submitOrder() {
+        function promptSaucesModal() {
             const name = document.getElementById('student-name').value.trim();
             const phone = document.getElementById('student-phone').value.trim();
             if(cart.length === 0) { alert('السلة فارغة.'); return; }
-            if(!name || !/^01[0125][0-9]{8}$/.test(phone)) { alert('ادخل الاسم ورقم هاتف مصري صحيح.'); return; }
-            
+            if(!name || !/^01[0125][0-9]{8}$/.test(phone)) { alert('ادخل الاسم ورقم هاتف مصري صحيح (11 رقم).'); return; }
+            document.getElementById('sauces-modal').classList.remove('hidden');
+        }
+
+        function quickAddSauce(name, price) {
+            addToCartDirect('sauce-' + Date.now(), `صوص ${name}`, price);
+            alert(`✅ تم إضافة صوص ${name} للسلة!`);
+        }
+
+        async function finalSubmitOrder() {
+            document.getElementById('sauces-modal').classList.add('hidden');
+            const name = document.getElementById('student-name').value.trim();
+            const phone = document.getElementById('student-phone').value.trim();
             const orderId = 'ORD-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const itemsCopy = [...cart];
@@ -245,7 +293,7 @@
             myOrders.unshift({ id: orderId, name, phone, items: itemsCopy, total, status: 'pending_pickup', time: new Date().toLocaleTimeString('ar-EG') });
             localStorage.setItem('student_all_orders', JSON.stringify(myOrders));
 
-            cart = []; renderCart(); switchTab('track');
+            cart = []; renderCart(); switchMainTab('track');
         }
 
         async function loadStudentOrders() {
