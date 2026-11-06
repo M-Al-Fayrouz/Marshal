@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الكاشير والإدارة | Kitchen POS</title>
+    <title>لوحة تحكم الكاشير الذكية | Kitchen POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -27,12 +27,12 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base leading-tight">لوحة تحكم كاشير المطعم</h1>
-                    <p class="text-[11px] text-slate-400">إدارة المنيو بالكامل ومسح الـ QR للاستلام</p>
+                    <p class="text-[11px] text-slate-400">إدارة المنيو، مسح الـ QR والتنبيهات الحية</p>
                 </div>
             </div>
             <nav class="flex items-center gap-2">
                 <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow">الطلبات والماسح</button>
-                <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow">إضافة وتعديل المنيو</button>
+                <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow">إدارة المنيو</button>
             </nav>
         </div>
     </header>
@@ -52,13 +52,23 @@
                 </div>
             </div>
 
+            <!-- أزرار الفلترة الحية للطلبات -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1">
+                <button onclick="setFilter('all')" id="filter-all" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white cursor-pointer">كل الطلبات</button>
+                <button onclick="setFilter('pending_pickup')" id="filter-pending" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 cursor-pointer">🟡 في انتظار الاستلام</button>
+                <button onclick="setFilter('completed')" id="filter-completed" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 cursor-pointer">✅ المسلمة</button>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Camera Scanner -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا لتسليم الطلب</h2>
-                    <p class="text-xs text-slate-500">صوّر كود الـ QR الخاص بالطالب عند وصوله للكاونتر لإتمام التسليم:</p>
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا الفوري</h2>
+                        <button onclick="restartScanner()" class="text-[11px] bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> إعادة تشغيل الكاميرا</button>
+                    </div>
+                    <p class="text-xs text-slate-500">وجه الكاميرا نحو كود الـ QR الخاص بالطالب لإتمام التسليم تلقائياً:</p>
                     <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px]"></div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">جاري تفعيل الكاميرا...</div>
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاهزة للعمل...</div>
                 </div>
 
                 <!-- Orders List -->
@@ -103,24 +113,45 @@
 
         let productsList = [];
         let orders = [];
-        let html5QrcodeScanner = null;
-        let lastScanned = "";
-        let cooldown = false;
+        let currentFilter = 'all';
+        let html5QrCode = null;
+        let isScanningActive = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
             initScanner();
 
-            // تحديث لحظي للأوردرات سحابياً
+            // الاستماع للطلبات الجديدة لحظياً عبر Supabase Realtime مع تشغيل الإشعار الصوتي
             supabase.channel('public:orders')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+                    playNotificationSound();
+                    fetchAllOrders();
+                })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
                     fetchAllOrders();
                 })
                 .subscribe();
         });
 
-        // دالة تبديل الشاشات المباشرة والموثوقة للأزرار العليا
+        // دالة إصدار إشعار صوتي عند وصول طلب جديد بدون الحاجة لملفات خارجية
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // نغمة D5
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } catch(e) {
+                console.log('Audio error:', e);
+            }
+        }
+
         function switchView(view) {
             const ordersView = document.getElementById('view-orders');
             const menuView = document.getElementById('view-menu-manager');
@@ -132,33 +163,50 @@
                 menuView.classList.add('hidden');
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
-                setTimeout(initScanner, 200);
+                setTimeout(initScanner, 300);
             } else if (view === 'menu-manager') {
                 ordersView.classList.add('hidden');
                 menuView.classList.remove('hidden');
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
                 
-                if (html5QrcodeScanner) {
-                    try { html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
-                }
+                stopScanner();
                 fetchAdminProducts();
             }
         }
 
         async function fetchAllOrders() {
-            const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-            orders = data || [];
+            const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+            if (!error) {
+                orders = data || [];
+                renderKitchenOrders();
+                updateSalesStats();
+            }
+        }
+
+        function setFilter(status) {
+            currentFilter = status;
+            ['all', 'pending', 'completed'].forEach(s => {
+                const btn = document.getElementById(`filter-${s}`);
+                if(btn) {
+                    btn.className = (s === status || (s === 'pending' && status === 'pending_pickup')) 
+                        ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white cursor-pointer"
+                        : "px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 cursor-pointer";
+                }
+            });
             renderKitchenOrders();
-            updateSalesStats();
         }
 
         async function fetchAdminProducts() {
-            const { data } = await supabase.from('products').select('*');
+            const { data, error } = await supabase.from('products').select('*');
+            if(error) {
+                console.error("Error fetching products:", error);
+                return;
+            }
             productsList = data || [];
             const list = document.getElementById('admin-products-list');
             if (productsList.length === 0) {
-                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. قم بإضافة منتجاتك من الأعلى.</p>`;
+                list.innerHTML = `<p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات مضافة بعد. أضف منتجاتك من الأعلى.</p>`;
                 return;
             }
             list.innerHTML = productsList.map(p => `
@@ -180,7 +228,10 @@
             const price = parseFloat(document.getElementById('p-price').value);
             const image_url = document.getElementById('p-image').value.trim();
 
-            if (!name || isNaN(price)) { alert('ادخل اسم المنتج وسعره الصحيح.'); return; }
+            if (!name || isNaN(price)) { 
+                alert('الرجاء ادخال اسم المنتج وسعره بشكل صحيح.'); 
+                return; 
+            }
 
             const { error } = await supabase.from('products').insert([{
                 name: name,
@@ -189,36 +240,44 @@
                 image_url: image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
             }]);
 
-            if (error) { alert('خطأ أثناء إضافة المنتج لقاعدة البيانات.'); return; }
+            if (error) { 
+                alert('خطأ في الاتصال بقاعدة البيانات (تأكد من صلاحيات RLS في Supabase): ' + error.message); 
+                return; 
+            }
 
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
             document.getElementById('p-image').value = '';
             fetchAdminProducts();
-            alert('✅ تم إضافة المنتج للمنيو بنجاح وأصبح ظاهراً للطلاب فوراً!');
+            alert('✅ تم إضافة المنتج بنجاح وأصبح متاحاً للطلاب فوراً!');
         }
 
         async function deleteProduct(id) {
-            if (!confirm('حذف هذا المنتج من المنيو؟')) return;
+            if (!confirm('هل أنت متأكد من حذف هذا المنتج من المنيو؟')) return;
             await supabase.from('products').delete().eq('id', id);
             fetchAdminProducts();
         }
 
         function renderKitchenOrders() {
             const container = document.getElementById('kitchen-orders-list');
-            if (orders.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-6">لا توجد طلبات واردة حالياً</p>`;
+            let filtered = orders;
+            if(currentFilter !== 'all') {
+                filtered = orders.filter(o => o.status === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-6">لا توجد طلبات مطابقة حالياً</p>`;
                 return;
             }
 
-            container.innerHTML = orders.map(o => `
+            container.innerHTML = filtered.map(o => `
                 <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
                             <span class="font-black text-sm text-slate-900">#${o.id}</span>
                             <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${
                                 o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار وصول الطالب والمسح' : '✅ تم الاستلام بنجاح'}</span>
+                            }">${o.status === 'pending_pickup' ? '🟡 في انتظار الاستلام' : '✅ تم الاستلام بنجاح'}</span>
                         </div>
                         <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
                         <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
@@ -248,39 +307,83 @@
             document.getElementById('completed-count').innerText = `${completed.length} طلب`;
         }
 
-        function initScanner() {
-            if (html5QrcodeScanner) return;
+        // تشغيل الكاميرا بشكل مستقر ومستمر 24/7 بدون تعليق
+        async function initScanner() {
+            if (isScanningActive) return;
+            
             const readerEl = document.getElementById('reader');
             if (!readerEl) return;
 
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
-            html5QrcodeScanner.render((code) => {
-                if (cooldown || code === lastScanned) return;
-                cooldown = true; lastScanned = code.trim();
-                handleScannedOrder(lastScanned);
-            }, () => {});
+            try {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("reader");
+                }
+                
+                const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+                
+                await html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    async (decodedText) => {
+                        await handleScannedOrder(decodedText.trim());
+                    },
+                    (errorMessage) => {
+                        // تجاهل أخطاء الإطار المتكررة لكي لا تعطل المتصفح
+                    }
+                );
+                isScanningActive = true;
+                document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
+                document.getElementById('scan-feedback').innerText = "الكاميرا تعمل وجاهزة للمسح...";
+            } catch (err) {
+                console.error("Camera start error:", err);
+                isScanningActive = false;
+                document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
+                document.getElementById('scan-feedback').innerText = "تعذر فتح الكاميرا (تأكد من إعطاء إذن الكاميرا أو استخدام HTTPS).";
+            }
+        }
+
+        async function stopScanner() {
+            if (html5QrCode && isScanningActive) {
+                try {
+                    await html5QrCode.stop();
+                    isScanningActive = false;
+                } catch(e) {
+                    console.error("Stop scanner error:", e);
+                }
+            }
+        }
+
+        async function restartScanner() {
+            await stopScanner();
+            setTimeout(initScanner, 500);
         }
 
         async function handleScannedOrder(code) {
             const feedback = document.getElementById('scan-feedback');
-            const { data } = await supabase.from('orders').select('*').ilike('id', code).single();
+            const { data, error } = await supabase.from('orders').select('*').ilike('id', code).single();
 
-            if (data) {
+            if (data && !error) {
                 if (data.status === 'pending_pickup') {
                     await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders();
                     feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم مسح وتسليم الطلب (${data.id}) بنجاح!`;
+                    feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
                 } else {
                     feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-blue-100 text-blue-800";
                     feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`;
                 }
             } else {
                 feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
+                feedback.innerText = `❌ كود غير صحيح: (${code})`;
             }
 
-            setTimeout(() => { cooldown = false; lastScanned = ""; feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700"; feedback.innerText = "الكاميرا جاهزة..."; }, 3500);
+            // إعادة ضبط رسالة الكاميرا بعد 3 ثواني مع بقاء الكاميرا مفتوحة ومستمرة
+            setTimeout(() => {
+                if(isScanningActive) {
+                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
+                    feedback.innerText = "الكاميرا تعمل وجاهزة للمسح...";
+                }
+            }, 3000);
         }
     </script>
 </body>
