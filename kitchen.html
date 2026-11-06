@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة الكاشير وإدارة المنيو | مارشال</title>
+    <title>لوحة الكاشير الآمنة | مارشال</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -19,6 +19,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
+    <!-- نافذة النجاح (علامة صح) -->
     <div id="success-popup" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-5 shadow-2xl border-4 border-emerald-500 animate-epic">
             <div class="w-32 h-32 bg-emerald-100 text-emerald-600 rounded-full mx-auto flex items-center justify-center text-6xl shadow-2xl shadow-emerald-500/50">
@@ -26,21 +27,36 @@
             </div>
             <div>
                 <h2 class="font-black text-3xl text-emerald-700">تم تسليم الطلب بنجاح! 🔥</h2>
-                <p class="text-xs text-slate-500 mt-1">الماسح التلقائي رصد الكود واعتمده فوراً</p>
+                <p class="text-xs text-slate-500 mt-1">تم مسح الكود واعتمده فوراً</p>
             </div>
             <div id="popup-order-details" class="text-xs font-bold text-slate-800 bg-emerald-50 p-4 rounded-2xl border border-emerald-200 leading-relaxed space-y-1">--</div>
-            <button type="button" onclick="closeSuccessPopup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-sm shadow-xl cursor-pointer">متابعة المسح</button>
+            <button type="button" onclick="closePopup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-sm shadow-xl cursor-pointer">متابعة المسح</button>
         </div>
     </div>
 
-    <!-- كلمة المرور (2529) -->
+    <!-- نافذة الخطأ أو التكرار (علامة X حمراء) -->
+    <div id="error-popup" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-4">
+        <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-5 shadow-2xl border-4 border-rose-500 animate-epic">
+            <div class="w-32 h-32 bg-rose-100 text-rose-600 rounded-full mx-auto flex items-center justify-center text-6xl shadow-2xl shadow-rose-500/50">
+                <i class="fa-solid fa-circle-xmark animate-bounce"></i>
+            </div>
+            <div>
+                <h2 id="error-title" class="font-black text-3xl text-rose-700">تنبيه نظام! ⚠️</h2>
+                <p id="error-subtitle" class="text-xs text-slate-500 mt-1">الكود غير صالح أو مستخدم من قبل</p>
+            </div>
+            <div id="error-details" class="text-xs font-bold text-slate-800 bg-rose-50 p-4 rounded-2xl border border-rose-200 leading-relaxed">--</div>
+            <button type="button" onclick="closePopup()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-4 rounded-2xl text-sm shadow-xl cursor-pointer">متابعة المسح</button>
+        </div>
+    </div>
+
+    <!-- شاشة تسجيل الدخول (تطلب مرة واحدة في اليوم فقط) -->
     <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-amber-500">
-            <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow"><i class="fa-solid fa-lock"></i></div>
-            <h2 class="font-black text-xl text-slate-900">لوحة تحكم المشرف</h2>
-            <p class="text-xs text-slate-500">أدخل رقم المرور السري للدخول (2529):</p>
+            <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow"><i class="fa-solid fa-shield-halved"></i></div>
+            <h2 class="font-black text-xl text-slate-900">بوابة الحماية المشفرة</h2>
+            <p class="text-xs text-slate-500">أدخل رقم المرور السري (مطلوب مرة واحدة يومياً):</p>
             <input type="password" id="admin-pass" placeholder="****" maxlength="6" class="w-full text-center text-xl tracking-widest p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
-            <button type="button" onclick="verifyPassword()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl text-xs shadow-lg cursor-pointer">دخول اللوحة</button>
+            <button type="button" onclick="verifyPassword()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl text-xs shadow-lg cursor-pointer">دخول آمن</button>
         </div>
     </div>
 
@@ -49,7 +65,7 @@
             <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl shadow"><i class="fa-solid fa-cash-register"></i></div>
-                    <div><h1 class="font-bold text-base leading-tight">لوحة تحكم الكاشير</h1><p class="text-[11px] text-amber-400">إدارة منيو مارشال والماسح السريع</p></div>
+                    <div><h1 class="font-bold text-base leading-tight">لوحة تحكم الكاشير</h1><p class="text-[11px] text-amber-400">ماسح الـ QR فائق السرعة والأمان</p></div>
                 </div>
                 <nav class="flex items-center gap-2">
                     <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg">الطلبات والماسح</button>
@@ -73,10 +89,10 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="glass-card text-slate-900 p-5 rounded-3xl shadow-xl space-y-4">
-                        <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-bolt text-amber-500"></i> الماسح السريع</h2>
-                        <p class="text-xs text-slate-500">وجه الكاميرا لنفس كود الـ QR الخاص بالطالب:</p>
+                        <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-bolt text-amber-500"></i> الماسح الصاروخي الفائق</h2>
+                        <p class="text-xs text-slate-500">مرر كود الـ QR أمام الكاميرا للقراءة الفورية:</p>
                         <div id="reader" class="rounded-2xl overflow-hidden border bg-black min-h-[280px]"></div>
-                        <div id="scan-feedback" class="text-center text-xs font-bold py-3 rounded-2xl bg-emerald-50 text-emerald-700 shadow-sm">⚡ الماسح جاهز للالتقاط...</div>
+                        <div id="scan-feedback" class="text-center text-xs font-bold py-3 rounded-2xl bg-emerald-50 text-emerald-700 shadow-sm">⚡ الماسح نشط وصاروخي...</div>
                     </div>
                     <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-3xl shadow-xl space-y-4">
                         <h2 class="font-bold text-base flex items-center justify-between">
@@ -88,20 +104,10 @@
                 </div>
             </div>
 
-            <!-- إدارة المنيو وتحديث Supabase -->
+            <!-- إدارة المنيو -->
             <div id="view-menu-manager" class="hidden space-y-6">
-                <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-5 rounded-3xl text-slate-950 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-                    <div>
-                        <h3 class="font-black text-base">زر الاستيراد التلقائي لمنيو مارشال الكامل 🔥</h3>
-                        <p class="text-xs opacity-90 mt-0.5">اضغط هنا لرفع كل الوجبات والأقسام المأخوذة من المنيو إلى Supabase فوراً.</p>
-                    </div>
-                    <button onclick="seedFullMarshallMenu()" class="bg-slate-950 hover:bg-slate-900 text-white font-black text-xs px-5 py-3 rounded-2xl shadow-2xl cursor-pointer">
-                        <i class="fa-solid fa-cloud-arrow-up ml-1"></i> رفع المنيو إلى Supabase
-                    </button>
-                </div>
-
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-plus text-amber-500"></i> إضافة وجبة جديدة يدويًا</h2>
+                    <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-plus text-amber-500"></i> إضافة وجبة جديدة</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                         <input type="text" id="p-name" placeholder="اسم الوجبة" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
                         <select id="p-category" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
@@ -113,11 +119,11 @@
                         </select>
                         <input type="number" id="p-price" placeholder="السعر (ج.م)" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
-                    <button type="button" onclick="addNewProduct()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-lg cursor-pointer">حفظ الوجبة في قاعدة البيانات</button>
+                    <button type="button" onclick="addNewProduct()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-lg cursor-pointer">حفظ الوجبة</button>
                 </div>
 
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-black text-lg">كل المنتجات المسجلة في Supabase</h2>
+                    <h2 class="font-black text-lg">المنتجات المسجلة</h2>
                     <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-slate-400 text-xs py-6">لا توجد منتجات.</p></div>
                 </div>
             </div>
@@ -130,74 +136,27 @@
         let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let orders = [], productsList = [], html5QrCode = null;
         let isProcessingScan = false;
+        let failedAttempts = 0;
 
-        // المنيو الكامل للرفع بضغطة واحدة
-        const fullMenuToSeed = [
-            { name: 'شاورما فراخ', price: 120, category: 'ركن الشاورما' },
-            { name: 'شاورما فراخ مشروم', price: 130, category: 'ركن الشاورما' },
-            { name: 'شاورما فراخ موزارايلا', price: 130, category: 'ركن الشاورما' },
-            { name: 'شاورما فراخ بطاطس', price: 125, category: 'ركن الشاورما' },
-            { name: 'شاورما فراخ ايطاليانو', price: 130, category: 'ركن الشاورما' },
-            { name: 'شاورما عربي', price: 160, category: 'ركن الوجبات' },
-            { name: 'شاورما ماريا', price: 170, category: 'ركن الوجبات' },
-            { name: 'شاورما تركي', price: 180, category: 'ركن الوجبات' },
-            { name: 'شاورما ايطالي', price: 180, category: 'ركن الوجبات' },
-            { name: 'صدور دجاج', price: 180, category: 'ركن الوجبات' },
-            { name: 'شيش طاووق', price: 180, category: 'ركن الوجبات' },
-            { name: 'كرسبي', price: 120, category: 'ركن السندوتشات' },
-            { name: 'زنجر', price: 120, category: 'ركن السندوتشات' },
-            { name: 'فاهيتا', price: 120, category: 'ركن السندوتشات' },
-            { name: 'صدور دجاج مشويه', price: 150, category: 'ركن السندوتشات' },
-            { name: 'هوت دوج', price: 100, category: 'ركن السندوتشات' },
-            { name: 'كفته', price: 90, category: 'ركن السندوتشات' },
-            { name: 'مشكل لحوم', price: 130, category: 'ركن السندوتشات' },
-            { name: 'مشكل دجاج', price: 130, category: 'ركن السندوتشات' },
-            { name: 'سوبر كرأنشي', price: 130, category: 'ركن السندوتشات' },
-            { name: 'برجر لحم فريش', price: 130, category: 'ركن السندوتشات' },
-            { name: 'برجر لحم فريش دوبل', price: 180, category: 'ركن السندوتشات' },
-            { name: 'تويستر زنجر', price: 150, category: 'ركن السندوتشات' },
-            { name: 'تويستر كرسبي', price: 150, category: 'ركن السندوتشات' },
-            { name: 'كاسديا', price: 150, category: 'ركن السندوتشات' },
-            { name: 'ساندوتش فلافل سوري', price: 40, category: 'ركن البطاطس' },
-            { name: 'سوري عادي', price: 45, category: 'ركن البطاطس' },
-            { name: 'سوري عادي تشيز', price: 55, category: 'ركن البطاطس' },
-            { name: 'فينو عادي', price: 70, category: 'ركن البطاطس' },
-            { name: 'فينو تشيز', price: 80, category: 'ركن البطاطس' },
-            { name: 'باكيت صغير صوصات', price: 45, category: 'ركن البطاطس' },
-            { name: 'باكيت كبير صوصات', price: 55, category: 'ركن البطاطس' },
-            { name: 'باكيت رنش صغير', price: 60, category: 'ركن البطاطس' },
-            { name: 'باكيت رنش كبير', price: 70, category: 'ركن البطاطس' },
-            { name: 'باكيت صغير تكساس', price: 60, category: 'ركن البطاطس' },
-            { name: 'باكيت كبير تكساس', price: 70, category: 'ركن البطاطس' },
-            { name: 'باكيت زنجر', price: 115, category: 'ركن البطاطس' },
-            { name: 'باكيت شاورما', price: 110, category: 'ركن البطاطس' },
-            { name: 'اضافة شيدر', price: 10, category: 'ركن البطاطس' },
-            { name: 'اضافة موزاريلا', price: 10, category: 'ركن البطاطس' },
-            { name: 'ثوميه', price: 15, category: 'ركن الصوصات' },
-            { name: 'ثوميه حاره', price: 15, category: 'ركن الصوصات' },
-            { name: 'طحينه', price: 15, category: 'ركن الصوصات' },
-            { name: 'صوص حار', price: 10, category: 'ركن الصوصات' },
-            { name: 'شيدر', price: 15, category: 'ركن الصوصات' },
-            { name: 'تكساس', price: 15, category: 'ركن الصوصات' },
-            { name: 'رانشي', price: 15, category: 'ركن الصوصات' },
-            { name: 'باربيكيو', price: 10, category: 'ركن الصوصات' }
-        ];
+        window.addEventListener('DOMContentLoaded', () => {
+            // التحقق من صلاحية الباسورد (صالحة لمدة 24 ساعة - مرة واحدة في اليوم)
+            const authTime = localStorage.getItem('admin_auth_timestamp');
+            const now = new Date().getTime();
+            if(authTime && (now - authTime < 24 * 60 * 60 * 1000)) {
+                document.getElementById('auth-modal').classList.add('hidden');
+                document.getElementById('admin-content').classList.remove('hidden');
+                fetchAllOrders(); fetchAdminProducts(); startDefaultScanner();
+            }
+        });
 
-        async function seedFullMarshallMenu() {
-            if(!confirm('هل أنت متأكد من استيراد المنيو كاملاً لقاعدة البيانات؟')) return;
-            const { error } = await db.from('products').insert(fullMenuToSeed);
-            if(error) { alert('حدث خطأ: ' + error.message); } 
-            else { alert('🎉 تم رفع المنيو بالكامل بنجاح إلى Supabase!'); fetchAdminProducts(); }
-        }
-
-        function playSuccessBeep() {
+        function playBeep(success = true) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
+                osc.frequency.setValueAtTime(success ? 880 : 300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(success ? 1760 : 150, audioCtx.currentTime + 0.15);
                 gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.connect(gain); gain.connect(audioCtx.destination);
@@ -207,11 +166,19 @@
 
         function verifyPassword() {
             const pass = document.getElementById('admin-pass').value.trim();
+            if(failedAttempts >= 3) {
+                alert('⚠️ تم قفل اللوحة مؤقتاً لمدة 30 ثانية بسبب محاولات خاطئة متكررة.');
+                return;
+            }
             if(pass === '2529') {
+                localStorage.setItem('admin_auth_timestamp', new Date().getTime());
                 document.getElementById('auth-modal').classList.add('hidden');
                 document.getElementById('admin-content').classList.remove('hidden');
                 fetchAllOrders(); fetchAdminProducts(); startDefaultScanner();
-            } else { alert('كلمة المرور غير صحيحة! (الكلمة: 2529)'); }
+            } else {
+                failedAttempts++;
+                alert(`كلمة المرور غير صحيحة! محاولة (${failedAttempts}/3)`);
+            }
         }
 
         function switchView(view) {
@@ -231,7 +198,7 @@
                 if(!html5QrCode.isScanning) {
                     await html5QrCode.start(
                         { facingMode: "environment" }, 
-                        { fps: 30, qrbox: { width: 250, height: 250 } }, 
+                        { fps: 30, qrbox: { width: 250, height: 250 }, experimentalFeatures: { useBarCodeDetectorIfSupported: true } }, 
                         async (decodedText) => { 
                             if(isProcessingScan) return;
                             isProcessingScan = true;
@@ -285,7 +252,7 @@
                 <div class="bg-slate-50 p-3.5 rounded-2xl border flex items-center justify-between shadow-sm">
                     <div>
                         <p class="font-black text-xs text-slate-900">${p.name}</p>
-                        <p class="text-[10px] text-amber-600 font-bold">${p.category || 'قسم آخر'}</p>
+                        <p class="text-[10px] text-amber-600 font-bold">${p.category || 'أخرى'}</p>
                         <p class="text-emerald-700 font-bold text-xs">${p.price} ج.م</p>
                     </div>
                     <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
@@ -301,7 +268,7 @@
             const { error } = await db.from('products').insert([{ name, category, price }]);
             if(error) { alert('خطأ: ' + error.message); return; }
             document.getElementById('p-name').value = ''; document.getElementById('p-price').value = '';
-            fetchAdminProducts(); alert('✅ تم حفظ الوجبة في Supabase بنجاح!');
+            fetchAdminProducts(); alert('✅ تم حفظ الوجبة بنجاح!');
         }
 
         async function deleteProduct(id) {
@@ -314,26 +281,48 @@
             const feedback = document.getElementById('scan-feedback');
             const cleanCode = code.replace(/^.*#/, '').trim();
             const { data, error } = await db.from('orders').select('*').ilike('id', `%${cleanCode}%`).single();
+            
             if(data && !error) {
                 if(data.status === 'pending_pickup') {
+                    // طلب سليم وقيد الانتظار -> اهتزاز واحد + صح
                     await db.from('orders').update({ status: 'completed' }).eq('id', data.id);
-                    fetchAllOrders(); playSuccessBeep();
-                    if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
+                    fetchAllOrders(); 
+                    playBeep(true);
+                    if (navigator.vibrate) navigator.vibrate(250);
+
                     document.getElementById('popup-order-details').innerHTML = `<strong>رقم الطلب:</strong> #${data.id}<br><strong>اسم الطالب:</strong> ${data.student_name}<br><strong>المحتويات:</strong> ${data.items.map(i => `${i.name} (x${i.qty})`).join(', ')}<br><strong>الإجمالي:</strong> <span class="text-amber-600 font-black">${data.total} ج.م</span>`;
                     document.getElementById('success-popup').classList.remove('hidden');
                     feedback.className = "text-center text-xs font-bold py-3 rounded-2xl bg-emerald-100 text-emerald-800 shadow-sm";
                     feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
                 } else {
+                    // طلب مستخدم مسبقاً -> 3 اهتزازات + X حمراء
+                    playBeep(false);
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+
+                    document.getElementById('error-title').innerText = "الطلب مستخدم مسبقاً! ℹ️";
+                    document.getElementById('error-details').innerHTML = `الطلب رقم <strong>#${data.id}</strong> الخاص بالطالب <strong>${data.student_name}</strong> تم تسليمه مسبقاً ولا يمكن استخدامه مرة أخرى.`;
+                    document.getElementById('error-popup').classList.remove('hidden');
                     feedback.className = "text-center text-xs font-bold py-3 rounded-2xl bg-blue-100 text-blue-800 shadow-sm";
-                    feedback.innerText = `ℹ️ الطلب (${data.id}) تم تسليمه مسبقاً!`; isProcessingScan = false;
+                    feedback.innerText = `ℹ️ الطلب (${data.id}) مسلّم مسبقاً!`;
                 }
             } else {
+                // كود خطأ غير موجود -> 2 اهتزاز + X حمراء
+                playBeep(false);
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+                document.getElementById('error-title').innerText = "كود غير صحيح! ❌";
+                document.getElementById('error-details').innerHTML = `الكود المدخل <strong>(${cleanCode})</strong> غير موجود في سجلات قاعدة البيانات.`;
+                document.getElementById('error-popup').classList.remove('hidden');
                 feedback.className = "text-center text-xs font-bold py-3 rounded-2xl bg-rose-100 text-rose-800 shadow-sm";
-                feedback.innerText = `❌ الكود غير مسجل!`; setTimeout(() => { isProcessingScan = false; }, 1800);
+                feedback.innerText = `❌ الكود غير صحيح!`;
             }
         }
 
-        function closeSuccessPopup() { document.getElementById('success-popup').classList.add('hidden'); isProcessingScan = false; }
+        function closePopup() {
+            document.getElementById('success-popup').classList.add('hidden');
+            document.getElementById('error-popup').classList.add('hidden');
+            isProcessingScan = false;
+        }
     </script>
 </body>
 </html>
