@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>كافتيريا الجامعة الذكية | طلبات الطلاب الآمنة</title>
+    <title>كافتيريا الجامعة الذكية | طلبات الطلاب</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -52,7 +52,7 @@
                         <i class="fa-solid fa-burger text-amber-500"></i> منيو المأكولات المتاح
                     </h2>
                     <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <p class="text-slate-400 text-xs py-8 col-span-2 text-center">جاري تحميل المنتجات...</p>
+                        <p class="text-slate-400 text-xs py-8 col-span-2 text-center">جاري تحميل المنتجات من قاعدة البيانات...</p>
                     </div>
                 </div>
 
@@ -129,10 +129,10 @@
         const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
         
-        let supabase = null;
+        let db = null;
         try {
             if (window.supabase) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             }
         } catch(e) {
             console.error("Supabase init error:", e);
@@ -145,34 +145,25 @@
             fetchProducts();
             checkUrlParams();
             loadOrderTracking();
-            
-            // تحديث دوري هادئ لا يسبب انهيار الصفحة
-            setInterval(() => {
-                try { loadOrderTracking(); } catch(e){}
-            }, 4000); 
         });
 
         function switchTab(tab) {
-            try {
-                document.getElementById('tab-menu').classList.toggle('hidden', tab !== 'menu');
-                document.getElementById('tab-track').classList.toggle('hidden', tab !== 'track');
-                document.getElementById('nav-menu').className = tab === 'menu' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
-                document.getElementById('nav-track').className = tab === 'track' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
-                if(tab === 'track') loadOrderTracking();
-            } catch(e) {
-                console.error("Switch tab error:", e);
-            }
+            document.getElementById('tab-menu').classList.toggle('hidden', tab !== 'menu');
+            document.getElementById('tab-track').classList.toggle('hidden', tab !== 'track');
+            document.getElementById('nav-menu').className = tab === 'menu' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
+            document.getElementById('nav-track').className = tab === 'track' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
+            if(tab === 'track') loadOrderTracking();
         }
 
         async function fetchProducts() {
             const grid = document.getElementById('products-grid');
-            if (!supabase) {
-                grid.innerHTML = `<p class="text-rose-400 text-xs py-8 col-span-2 text-center">خطأ في تهيئة اتصال قاعدة البيانات.</p>`;
+            if (!db) {
+                grid.innerHTML = `<p class="text-rose-400 text-xs py-8 col-span-2 text-center">خطأ في الاتصال بقاعدة البيانات.</p>`;
                 return;
             }
 
             try {
-                const { data, error } = await supabase.from('products').select('*');
+                const { data, error } = await db.from('products').select('*');
                 
                 if(error || !data || data.length === 0) {
                     grid.innerHTML = `<p class="text-slate-400 text-xs py-8 col-span-2 text-center">لا توجد منتجات مضافة حالياً من لوحة الكاشير.</p>`;
@@ -198,8 +189,7 @@
                     </div>
                 `).join('');
             } catch (err) {
-                console.error("Fetch products exception:", err);
-                grid.innerHTML = `<p class="text-rose-400 text-xs py-8 col-span-2 text-center">تعذر جلب المنتجات، تأكد من الاتصال وقاعدة البيانات.</p>`;
+                grid.innerHTML = `<p class="text-rose-400 text-xs py-8 col-span-2 text-center">تعذر جلب المنتجات.</p>`;
             }
         }
 
@@ -243,13 +233,13 @@
             
             if(cart.length === 0) { alert('السلة فارغة.'); return; }
             if(!name || !/^01[0125][0-9]{8}$/.test(phone)) { alert('ادخل الاسم ورقم هاتف مصري صحيح (11 رقم).'); return; }
-            if(!supabase) { alert('خطأ في اتصال قاعدة البيانات.'); return; }
+            if(!db) { alert('قاعدة البيانات غير متصلة.'); return; }
 
             const orderId = 'ORD-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
             try {
-                const { error } = await supabase.from('orders').insert([{
+                const { error } = await db.from('orders').insert([{
                     id: orderId,
                     student_name: name,
                     student_phone: phone,
@@ -265,12 +255,12 @@
                 history.pushState(null, '', `?orderId=${orderId}`);
                 switchTab('track');
             } catch(err) {
-                alert('حدث خطأ غير متوقع أثناء إرسال الطلب.');
+                alert('حدث خطأ غير متوقع.');
             }
         }
 
         async function loadOrderTracking() {
-            if(!supabase) return;
+            if(!db) return;
             const activeId = new URLSearchParams(window.location.search).get('orderId') || localStorage.getItem('active_order_id');
             const noMsg = document.getElementById('no-order-msg');
             const card = document.getElementById('order-tracking-card');
@@ -278,8 +268,7 @@
             if(!activeId) { noMsg.classList.remove('hidden'); card.classList.add('hidden'); return; }
 
             try {
-                const { data } = await supabase.from('orders').select('*').eq('id', activeId).single();
-
+                const { data } = await db.from('orders').select('*').eq('id', activeId).single();
                 if(!data) { noMsg.classList.remove('hidden'); card.classList.add('hidden'); return; }
 
                 noMsg.classList.add('hidden'); card.classList.remove('hidden');
@@ -302,8 +291,7 @@
                 if (qrContainer.innerHTML === '') {
                     new QRCode(qrContainer, {
                         text: data.id, width: 160, height: 160,
-                        colorDark: "#0f172a",
-                        colorLight: "#ffffff"
+                        colorDark: "#0f172a", colorLight: "#ffffff"
                     });
                 }
             } catch(e) {}
