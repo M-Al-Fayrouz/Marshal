@@ -19,7 +19,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
-    <!-- نافذة النجاح (علامة صح) -->
+    <!-- نافذة النجاح -->
     <div id="success-popup" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-5 shadow-2xl border-4 border-emerald-500 animate-epic">
             <div class="w-32 h-32 bg-emerald-100 text-emerald-600 rounded-full mx-auto flex items-center justify-center text-6xl shadow-2xl shadow-emerald-500/50">
@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    <!-- نافذة الخطأ أو التكرار (علامة X حمراء) -->
+    <!-- نافذة الخطأ -->
     <div id="error-popup" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-5 shadow-2xl border-4 border-rose-500 animate-epic">
             <div class="w-32 h-32 bg-rose-100 text-rose-600 rounded-full mx-auto flex items-center justify-center text-6xl shadow-2xl shadow-rose-500/50">
@@ -49,12 +49,12 @@
         </div>
     </div>
 
-    <!-- شاشة تسجيل الدخول (تطلب مرة واحدة في اليوم فقط) -->
+    <!-- شاشة تسجيل الدخول (مرة واحدة في اليوم) -->
     <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-amber-500">
             <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow"><i class="fa-solid fa-shield-halved"></i></div>
             <h2 class="font-black text-xl text-slate-900">بوابة الحماية المشفرة</h2>
-            <p class="text-xs text-slate-500">أدخل رقم المرور السري (مطلوب مرة واحدة يومياً):</p>
+            <p class="text-xs text-slate-500">أدخل رقم المرور السري:</p>
             <input type="password" id="admin-pass" placeholder="****" maxlength="6" class="w-full text-center text-xl tracking-widest p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
             <button type="button" onclick="verifyPassword()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl text-xs shadow-lg cursor-pointer">دخول آمن</button>
         </div>
@@ -104,7 +104,7 @@
                 </div>
             </div>
 
-            <!-- إدارة المنيو -->
+            <!-- إدارة المنيو وتعديل الأسعار التلقائي -->
             <div id="view-menu-manager" class="hidden space-y-6">
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
                     <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-plus text-amber-500"></i> إضافة وجبة جديدة</h2>
@@ -123,7 +123,7 @@
                 </div>
 
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-black text-lg">المنتجات المسجلة</h2>
+                    <h2 class="font-black text-lg">المنتجات المسجلة (يمكن تعديل السعر فوراً بالنقر عليه)</h2>
                     <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-slate-400 text-xs py-6">لا توجد منتجات.</p></div>
                 </div>
             </div>
@@ -139,7 +139,6 @@
         let failedAttempts = 0;
 
         window.addEventListener('DOMContentLoaded', () => {
-            // التحقق من صلاحية الباسورد (صالحة لمدة 24 ساعة - مرة واحدة في اليوم)
             const authTime = localStorage.getItem('admin_auth_timestamp');
             const now = new Date().getTime();
             if(authTime && (now - authTime < 24 * 60 * 60 * 1000)) {
@@ -221,14 +220,32 @@
             container.innerHTML = orders.map(o => `
                 <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div class="space-y-1">
-                        <div class="flex items-center gap-2"><span class="font-black text-sm text-slate-900">#${o.id}</span><span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${o.status === 'pending_pickup' ? '🟡 قيد الانتظار' : '✅ تم الاستلام'}</span></div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-black text-sm text-slate-900">#${o.id}</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : o.status === 'ready' ? 'bg-emerald-100 text-emerald-800 font-black animate-pulse' : 'bg-slate-200 text-slate-700'}">
+                                ${o.status === 'pending_pickup' ? '🟡 جارِ التجهيز' : o.status === 'ready' ? '🟢 جاهز للاستلام (إشعار مرسل)' : '✅ تم الاستلام'}
+                            </span>
+                        </div>
                         <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
                         <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
                         <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
                     </div>
-                    <div>${o.status === 'pending_pickup' ? `<button type="button" onclick="manualComplete('${o.id}')" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer shadow">تسليم فوري</button>` : ''}</div>
+                    <div class="flex items-center gap-2">
+                        ${o.status === 'pending_pickup' ? `
+                            <button type="button" onclick="markReady('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-xl cursor-pointer shadow flex items-center gap-1.5 active:scale-95">
+                                <i class="fa-solid fa-bell"></i> جاهز للاستلام 🚀
+                            </button>
+                        ` : o.status === 'ready' ? `
+                            <button type="button" onclick="manualComplete('${o.id}')" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer shadow">تسليم فوري</button>
+                        ` : ''}
+                    </div>
                 </div>
             `).join('');
+        }
+
+        async function markReady(id) {
+            await db.from('orders').update({ status: 'ready' }).eq('id', id);
+            fetchAllOrders();
         }
 
         async function manualComplete(id) {
@@ -253,11 +270,20 @@
                     <div>
                         <p class="font-black text-xs text-slate-900">${p.name}</p>
                         <p class="text-[10px] text-amber-600 font-bold">${p.category || 'أخرى'}</p>
-                        <p class="text-emerald-700 font-bold text-xs">${p.price} ج.م</p>
+                        <div class="flex items-center gap-1 mt-1">
+                            <input type="number" value="${p.price}" onchange="autoUpdatePrice('${p.id}', this.value)" class="w-16 text-xs p-1 rounded border font-bold text-emerald-700 bg-white outline-none">
+                            <span class="text-xs text-slate-500 font-bold">ج.م</span>
+                        </div>
                     </div>
                     <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
+        }
+
+        async function autoUpdatePrice(id, newPrice) {
+            const priceNum = parseFloat(newPrice);
+            if(isNaN(priceNum)) return;
+            await db.from('products').update({ price: priceNum }).eq('id', id);
         }
 
         async function addNewProduct() {
@@ -283,8 +309,7 @@
             const { data, error } = await db.from('orders').select('*').ilike('id', `%${cleanCode}%`).single();
             
             if(data && !error) {
-                if(data.status === 'pending_pickup') {
-                    // طلب سليم وقيد الانتظار -> اهتزاز واحد + صح
+                if(data.status === 'ready' || data.status === 'pending_pickup') {
                     await db.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders(); 
                     playBeep(true);
@@ -295,7 +320,6 @@
                     feedback.className = "text-center text-xs font-bold py-3 rounded-2xl bg-emerald-100 text-emerald-800 shadow-sm";
                     feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
                 } else {
-                    // طلب مستخدم مسبقاً -> 3 اهتزازات + X حمراء
                     playBeep(false);
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
 
@@ -306,7 +330,6 @@
                     feedback.innerText = `ℹ️ الطلب (${data.id}) مسلّم مسبقاً!`;
                 }
             } else {
-                // كود خطأ غير موجود -> 2 اهتزاز + X حمراء
                 playBeep(false);
                 if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
