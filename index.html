@@ -20,6 +20,27 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950 pb-28">
 
+    <!-- بنر طلب التنبيهات الشيك والجذاب -->
+    <div id="custom-notify-banner" class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 px-4 py-3 shadow-2xl border-b border-amber-400 flex items-center justify-between gap-3 text-xs font-bold">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-slate-950 text-amber-400 rounded-xl flex items-center justify-center text-lg shadow-md animate-bounce">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <div>
+                <p class="font-black text-sm text-slate-950">عايز رنة وتنبيه فور ما وجبتك تجهز؟ 🍔✨</p>
+                <p class="text-[11px] text-slate-900 font-extrabold opacity-90">فعل التنبيهات بلمسة واحدة عشان يوصلك إشعار فوري!</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="requestCustomNotification()" class="bg-slate-950 text-amber-400 hover:bg-slate-900 px-3.5 py-2 rounded-xl font-black shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95">
+                <i class="fa-solid fa-bell text-amber-400"></i> تفعيل التنبيهات
+            </button>
+            <button onclick="closeNotifyBanner()" class="text-slate-950/70 hover:text-slate-950 p-1 cursor-pointer">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+    </div>
+
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-2xl">
         <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -80,11 +101,10 @@
             <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-xl flex items-center justify-between">
                 <div>
                     <h3 class="font-black text-base text-slate-900"><i class="fa-solid fa-qrcode text-indigo-600 ml-2"></i> أكواد الـ QR والطلبات الحالية</h3>
-                    <p class="text-xs text-slate-500 mt-1">عرض الكود النشط للكاشير لاستلام الوجبة فوراً.</p>
+                    <p class="text-xs text-slate-500 mt-1">سيظهر الكود فور إعلان الكاشير جاهزية طلبك.</p>
                 </div>
                 <button type="button" onclick="loadStudentOrders()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer shadow"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
-            <!-- مكان أول كود QR جديد ليظهر في أعلى الصفحة مباشرة -->
             <div id="top-new-qr-container"></div>
             <div id="student-orders-container" class="space-y-4">
                 <p class="text-center text-slate-400 text-xs py-8">لا توجد طلبات محفوظة حالياً.</p>
@@ -137,20 +157,47 @@
         let cart = [], productsList = [];
         let selectedSandwichItem = null;
 
-        // صور كفرات دقيقة جداً ومخصصة لكل قسم بالملي (شاورما حقيقية، وجبات، سندوتشات، بطاطس، وعلب صوصات وثومية)
         const categoryBanners = {
-            'ركن الشاورما': 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=1000&q=85',
+            'ركن الشاورما': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=1000&q=85',
             'ركن الوجبات': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000&q=85',
             'ركن السندوتشات': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=1000&q=85',
-            'ركن البطاطس': 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=1000&q=85',
-            'ركن الصوصات': 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=1000&q=85'
+            'ركن البطاطس': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=1000&q=85',
+            'ركن الصوصات': 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&q=85'
         };
 
         window.addEventListener('DOMContentLoaded', () => { 
             fetchProducts(); 
             loadStudentOrders(); 
             loadSavedUserData();
+            checkNotificationPermission();
+            setInterval(loadStudentOrders, 4000); 
         });
+
+        function checkNotificationPermission() {
+            if ("Notification" in window && Notification.permission === "granted") {
+                document.getElementById('custom-notify-banner').classList.add('hidden');
+            }
+        }
+
+        function requestCustomNotification() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        closeNotifyBanner();
+                        new Notification("مارشال - ركن الشاورما 🍔", {
+                            body: "✅ تم تفعيل التنبيهات بنجاح! سينبهك النظام فور جاهزية الوجبة.",
+                            icon: categoryBanners['ركن الشاورما']
+                        });
+                    }
+                });
+            } else {
+                alert('متصفحك لا يدعم الإشعارات الفورية.');
+            }
+        }
+
+        function closeNotifyBanner() {
+            document.getElementById('custom-notify-banner').classList.add('hidden');
+        }
 
         function saveUserData() {
             localStorage.setItem('saved_student_name', document.getElementById('student-name').value);
@@ -200,7 +247,7 @@
 
             container.innerHTML = Object.keys(categories).map(cat => `
                 <div id="sec-${cat}" class="space-y-4 pt-2">
-                    <div class="relative h-44 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/30">
+                    <div class="relative h-44 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/35">
                         <img src="${categoryBanners[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000'}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent flex items-end p-5">
                             <h2 class="font-black text-2xl text-white drop-shadow-lg tracking-wide">${cat}</h2>
@@ -339,8 +386,6 @@
             cart = []; 
             renderCart(); 
             switchMainTab('track');
-            
-            // الانتقال الفوري لأعلى الصفحة لإظهار الـ QR Code الجديد مباشرة للعميل
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -355,50 +400,74 @@
                 return;
             }
 
+            let statusChangedToReady = false;
             for(let ord of localOrders) {
                 const { data } = await db.from('orders').select('status').eq('id', ord.id).single();
-                if(data) ord.status = data.status;
+                if(data && data.status !== ord.status) {
+                    if(data.status === 'ready') statusChangedToReady = true;
+                    ord.status = data.status;
+                }
             }
             localStorage.setItem('student_all_orders', JSON.stringify(localOrders));
 
-            // جعل أول طلب (الجديد كلياً) يظهر في أعلى الصفحة ببروز ممتاز
+            // إرسال إشعار نظام حقيقي من بره الشاشة لو التليفون مقفول أو التطبيق خلفية
+            if(statusChangedToReady) {
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("الوجبة جاهزة الآن! 🌯🔥", {
+                        body: `طلبك جاهز للاستلام من الكاشير فوراً، افتح الموقع لعرض الـ QR!`,
+                        icon: categoryBanners['ركن الشاورما']
+                    });
+                }
+                if(navigator.vibrate) navigator.vibrate([300, 150, 300]);
+            }
+
             const latestOrder = localOrders[0];
-            const isPendingLatest = latestOrder.status === 'pending_pickup';
+            const isReady = latestOrder.status === 'ready';
+            const isCompleted = latestOrder.status === 'completed';
 
             topContainer.innerHTML = `
-                <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-2xl border-4 ${isPendingLatest ? 'border-amber-500 bg-white' : 'border-slate-300 bg-slate-50/70 opacity-80'} flex flex-col sm:flex-row items-center justify-between gap-5 mb-6">
-                    <div class="space-y-2 text-right w-full sm:w-auto">
-                        <div class="flex items-center gap-2">
-                            <span class="bg-amber-500 text-slate-950 text-xs px-2.5 py-1 rounded-lg font-black">أحدث طلب</span>
-                            <span class="font-black text-sm text-slate-900">#${latestOrder.id}</span>
-                            <span class="text-xs px-3 py-1 rounded-full font-extrabold ${isPendingLatest ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
-                                ${isPendingLatest ? '🟡 طلب نشط (قيد التجهيز)' : '✅ تم الاستلام بنجاح'}
-                            </span>
+                <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-2xl border-4 ${isReady ? 'border-emerald-500 bg-white animate-pulse' : 'border-amber-400 bg-white'} mb-6">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
+                        <div class="space-y-2 text-right w-full sm:w-auto">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-amber-500 text-slate-950 text-xs px-2.5 py-1 rounded-lg font-black">أحدث طلب</span>
+                                <span class="font-black text-sm text-slate-900">#${latestOrder.id}</span>
+                                <span class="text-xs px-3 py-1 rounded-full font-extrabold ${isReady ? 'bg-emerald-100 text-emerald-800' : isCompleted ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}">
+                                    ${isReady ? '🟢 جاهز للاستلام! اذهب للكاشير' : isCompleted ? '✅ تم الاستلام بنجاح' : '🟡 جارِ تجهيز الطلب في المطبخ...'}
+                                </span>
+                            </div>
+                            <p class="text-xs font-bold text-slate-700">الاسم: ${latestOrder.name} | الهاتف: ${latestOrder.phone}</p>
+                            <p class="text-xs text-slate-600">المحتويات: ${latestOrder.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
+                            <p class="text-xs font-black text-amber-600">الإجمالي: ${latestOrder.total} ج.م</p>
                         </div>
-                        <p class="text-xs font-bold text-slate-700">الاسم: ${latestOrder.name} | الهاتف: ${latestOrder.phone}</p>
-                        <p class="text-xs text-slate-600">المحتويات: ${latestOrder.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
-                        <p class="text-xs font-black text-amber-600">الإجمالي: ${latestOrder.total} ج.م</p>
-                    </div>
-                    <div class="flex flex-col items-center justify-center">
-                        <div class="bg-white p-3 rounded-2xl border-2 shadow-md ${isPendingLatest ? 'w-40 h-40 scale-100 border-amber-500' : 'w-24 h-24 opacity-40 filter blur-[0.6px] border-slate-300'} flex items-center justify-center transition-all">
-                            <div id="qr-top-${latestOrder.id}"></div>
+                        <div class="flex flex-col items-center justify-center">
+                            ${isReady ? `
+                                <div class="bg-white p-3 rounded-2xl border-2 border-emerald-500 shadow-xl w-40 h-40 flex items-center justify-center">
+                                    <div id="qr-top-${latestOrder.id}"></div>
+                                </div>
+                                <span class="text-[11px] mt-2 font-black text-emerald-700">📸 اعرض الكود للكاشير الآن</span>
+                            ` : `
+                                <div class="bg-slate-100 p-4 rounded-2xl border-2 border-dashed border-slate-300 w-44 h-40 flex flex-col items-center justify-center text-center space-y-2">
+                                    <i class="fa-solid fa-clock text-3xl text-amber-500 animate-spin"></i>
+                                    <span class="text-[11px] font-bold text-slate-500">سيظهر كود الـ QR فور إعلان الكاشير جاهزية الطلب!</span>
+                                </div>
+                            `}
                         </div>
-                        <span class="text-[11px] mt-2 font-bold ${isPendingLatest ? 'text-amber-700' : 'text-slate-400'}">${isPendingLatest ? '📸 اعرض هذا الكود للكاشير' : 'تم استلام هذا الطلب'}</span>
                     </div>
                 </div>
             `;
 
-            // باقي الطلبات القديمة بالأسفل
             const olderOrders = localOrders.slice(1);
             container.innerHTML = olderOrders.map(o => {
-                const isPending = o.status === 'pending_pickup';
+                const ready = o.status === 'ready';
+                const comp = o.status === 'completed';
                 return `
-                    <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-xl border-2 ${isPending ? 'border-amber-400 bg-white' : 'border-slate-300 bg-slate-50/70 opacity-80'} flex flex-col sm:flex-row items-center justify-between gap-5">
+                    <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-xl border-2 ${ready ? 'border-emerald-400 bg-white' : 'border-slate-300 bg-slate-50/70'} flex flex-col sm:flex-row items-center justify-between gap-5">
                         <div class="space-y-2 text-right w-full sm:w-auto">
                             <div class="flex items-center gap-2">
                                 <span class="font-black text-sm text-slate-900">#${o.id}</span>
-                                <span class="text-xs px-3 py-1 rounded-full font-extrabold ${isPending ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
-                                    ${isPending ? '🟡 طلب نشط (قيد التجهيز)' : '✅ تم الاستلام بنجاح'}
+                                <span class="text-xs px-3 py-1 rounded-full font-extrabold ${ready ? 'bg-emerald-100 text-emerald-800' : comp ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}">
+                                    ${ready ? '🟢 جاهز للاستلام' : comp ? '✅ تم الاستلام' : '🟡 قيد التجهيز'}
                                 </span>
                             </div>
                             <p class="text-xs font-bold text-slate-700">الاسم: ${o.name} | الهاتف: ${o.phone}</p>
@@ -406,24 +475,29 @@
                             <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
                         </div>
                         <div class="flex flex-col items-center justify-center">
-                            <div class="bg-white p-3 rounded-2xl border-2 shadow-md ${isPending ? 'w-40 h-40 scale-100 border-amber-500' : 'w-24 h-24 opacity-40 filter blur-[0.6px] border-slate-300'} flex items-center justify-center transition-all">
-                                <div id="qr-${o.id}"></div>
-                            </div>
-                            <span class="text-[11px] mt-2 font-bold ${isPending ? 'text-amber-700' : 'text-slate-400'}">${isPending ? '📸 اعرض هذا الكود للكاشير' : 'تم استلام هذا الطلب'}</span>
+                            ${ready ? `
+                                <div class="bg-white p-3 rounded-2xl border-2 border-emerald-500 shadow-md w-32 h-32 flex items-center justify-center">
+                                    <div id="qr-${o.id}"></div>
+                                </div>
+                            ` : `<span class="text-[11px] font-bold text-slate-400">قيد التجهيز...</span>`}
                         </div>
                     </div>
                 `;
             }).join('');
 
             setTimeout(() => {
-                const topEl = document.getElementById(`qr-top-${latestOrder.id}`);
-                if(topEl && topEl.innerHTML === '') {
-                    new QRCode(topEl, { text: latestOrder.id, width: 140, height: 140, colorDark: "#0f172a", colorLight: "#ffffff" });
+                if(isReady) {
+                    const topEl = document.getElementById(`qr-top-${latestOrder.id}`);
+                    if(topEl && topEl.innerHTML === '') {
+                        new QRCode(topEl, { text: latestOrder.id, width: 140, height: 140, colorDark: "#0f172a", colorLight: "#ffffff" });
+                    }
                 }
                 olderOrders.forEach(o => {
-                    const el = document.getElementById(`qr-${o.id}`);
-                    if(el && el.innerHTML === '') {
-                        new QRCode(el, { text: o.id, width: 80, height: 80, colorDark: "#0f172a", colorLight: "#ffffff" });
+                    if(o.status === 'ready') {
+                        const el = document.getElementById(`qr-${o.id}`);
+                        if(el && el.innerHTML === '') {
+                            new QRCode(el, { text: o.id, width: 100, height: 100, colorDark: "#0f172a", colorLight: "#ffffff" });
+                        }
                     }
                 });
             }, 100);
