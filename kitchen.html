@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لوحة الكاشير الآمنة | مارشال</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { font-family: 'Tajawal', sans-serif; transition: all 0.2s ease; }
+        /* منع الزوم التلقائي نهائياً عند الكتابة أو النقر في الموبايل */
+        input, select, textarea { font-size: 16px !important; }
         .glass-card { background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         #reader video { width: 100% !important; height: 280px !important; object-fit: cover !important; border-radius: 1rem !important; }
         @keyframes epicPop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
@@ -69,8 +71,8 @@
                 </div>
                 <nav class="flex items-center gap-2">
                     <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg">الطلبات والماسح</button>
-                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو والأسعار</button>
-                    <button type="button" onclick="switchView('images-manager')" id="btn-images" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">تعديل صور الأقسام</button>
+                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو</button>
+                    <button type="button" onclick="switchView('images-manager')" id="btn-images" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">صور الأقسام</button>
                 </nav>
             </div>
         </header>
@@ -105,35 +107,35 @@
                 </div>
             </div>
 
-            <!-- إدارة المنيو وتعديل الأسعار التلقائي -->
+            <!-- إدارة المنيو والأسعار (بدون تكبير الشاشة) -->
             <div id="view-menu-manager" class="hidden space-y-6">
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
                     <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-plus text-amber-500"></i> إضافة وجبة جديدة</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                        <input type="text" id="p-name" placeholder="اسم الوجبة" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
-                        <select id="p-category" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <input type="text" id="p-name" placeholder="اسم الوجبة" class="text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <select id="p-category" class="text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
                             <option value="ركن الشاورما">ركن الشاورما</option>
                             <option value="ركن الوجبات">ركن الوجبات</option>
                             <option value="ركن السندوتشات">ركن السندوتشات</option>
                             <option value="ركن البطاطس">ركن البطاطس</option>
                             <option value="ركن الصوصات">ركن الصوصات</option>
                         </select>
-                        <input type="number" id="p-price" placeholder="السعر (ج.م)" class="text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <input type="number" id="p-price" placeholder="السعر (ج.م)" class="text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
                     <button type="button" onclick="addNewProduct()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-lg cursor-pointer">حفظ الوجبة</button>
                 </div>
 
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-black text-lg">المنتجات المسجلة (يمكن تعديل السعر فوراً بالنقر عليه)</h2>
+                    <h2 class="font-black text-lg">المنتجات المسجلة (تعديل فوري للأسعار)</h2>
                     <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات.</p></div>
                 </div>
             </div>
 
-            <!-- قسم تعديل صور الأقسام بالروابط مباشرة -->
+            <!-- قسم تعديل صور الأقسام من الاستوديو مباشرة -->
             <div id="view-images-manager" class="hidden space-y-6">
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-image text-amber-500"></i> تعديل صور كفرات الأقسام بالروابط المباشرة</h2>
-                    <p class="text-xs text-slate-500">ضع رابط الصورة الجديد (URL) أمام كل قسم وضغط "تحديث الصورة" لتتغير فوراً عند كل الطلاب:</p>
+                    <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-images text-amber-500"></i> تغيير صور كفرات الأقسام من الاستوديو</h2>
+                    <p class="text-xs text-slate-500">اختر القسم، ثم اختر الصورة مباشرة من استوديو جهازك ليتم حفظها وتحديثها فوراً:</p>
                     <div id="category-image-inputs" class="space-y-4 pt-2">
                         <!-- يتم تعبئته برمجياً -->
                     </div>
@@ -268,7 +270,7 @@
                         <p class="font-black text-xs text-slate-900">${p.name}</p>
                         <p class="text-[10px] text-amber-600 font-bold">${p.category || 'أخرى'}</p>
                         <div class="flex items-center gap-1 mt-1">
-                            <input type="number" value="${p.price}" onchange="autoUpdatePrice('${p.id}', this.value)" class="w-16 text-xs p-1 rounded border font-bold text-emerald-700 bg-white outline-none">
+                            <input type="number" value="${p.price}" onchange="autoUpdatePrice('${p.id}', this.value)" class="w-16 text-sm p-1.5 rounded border font-bold text-emerald-700 bg-white outline-none">
                             <span class="text-xs text-slate-500 font-bold">ج.م</span>
                         </div>
                     </div>
@@ -311,23 +313,37 @@
             }
 
             container.innerHTML = categories.map(cat => `
-                <div class="bg-slate-50 p-4 rounded-2xl border space-y-2">
+                <div class="bg-slate-50 p-4 rounded-2xl border space-y-3">
                     <label class="font-black text-xs text-slate-900 block">${cat}</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="img-url-${cat}" value="${bannersMap[cat] || ''}" placeholder="ضع رابط الصورة المباشر هنا (URL)..." class="flex-1 text-xs p-3 rounded-xl border bg-white outline-none font-bold">
-                        <button type="button" onclick="updateCategoryBanner('${cat}')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-4 py-2 rounded-xl text-xs cursor-pointer shadow">تحديث الصورة</button>
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded-xl overflow-hidden border bg-white flex items-center justify-center shrink-0">
+                            <img id="preview-${cat.replace(/\s+/g, '')}" src="${bannersMap[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 space-y-1">
+                            <input type="file" accept="image/*" id="file-${cat.replace(/\s+/g, '')}" onchange="uploadCategoryBannerImage('${cat}')" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 cursor-pointer">
+                            <p class="text-[10px] text-slate-400">اختر صورة مباشرة من الاستوديو لتحديث الكفر فوراً</p>
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        async function updateCategoryBanner(cat) {
-            const url = document.getElementById(`img-url-${cat}`).value.trim();
-            if(!url) { alert('برجاء إدخال رابط الصورة.'); return; }
-            
-            const { error } = await db.from('category_banners').upsert([{ category_name: cat, image_url: url }], { onConflict: 'category_name' });
-            if(error) { alert('خطأ في التحديث: ' + error.message); return; }
-            alert(`✅ تم تحديث صورة (${cat}) بنجاح وتطبيقها للمنيو فوراً!`);
+        async function uploadCategoryBannerImage(cat) {
+            const fileInput = document.getElementById(`file-${cat.replace(/\s+/g, '')}`);
+            const file = fileInput.files[0];
+            if(!file) return;
+
+            // تحويل الصورة المرفوعة من الاستوديو إلى Base64 لتخزينها بسلاسة تامة بدون تعقيد بريدج الـ Storage
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Image = e.target.result;
+                const { error } = await db.from('category_banners').upsert([{ category_name: cat, image_url: base64Image }], { onConflict: 'category_name' });
+                if(error) { alert('خطأ في حفظ الصورة: ' + error.message); return; }
+                
+                document.getElementById(`preview-${cat.replace(/\s+/g, '')}`).src = base64Image;
+                alert(`✅ تم تحديث صورة (${cat}) من الاستوديو بنجاح وتطبيقها للمنيو فوراً!`);
+            };
+            reader.readAsDataURL(file);
         }
 
         async function handleScannedOrder(code) {
@@ -351,7 +367,7 @@
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
 
                     document.getElementById('error-title').innerText = "الطلب مستخدم مسبقاً! ℹ️";
-                    document.getElementById('error-details').innerHTML = `الطلب رقم <strong>#${data.id}</strong> الخاص بالطالب <strong>${data.student_name}</strong> تم تسليمه مسبقاً ولا يمكن استخدامه مرة أخرى.`;
+                    document.getElementById('error-details').innerHTML = `الطلب رقم <strong>#${data.id}</strong> الخاص بالطالب <strong>${data.student_name}</strong> تم تسليمه مسبقاً ولا يمكن استخدامه مرة واحدة.`;
                     document.getElementById('error-popup').classList.remove('hidden');
                     feedback.className = "text-center text-xs font-bold py-3 rounded-2xl bg-blue-100 text-blue-800 shadow-sm";
                     feedback.innerText = `ℹ️ الطلب (${data.id}) مسلّم مسبقاً!`;
