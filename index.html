@@ -75,6 +75,7 @@
             </div>
         </section>
 
+        <!-- صفحة سجل الطلبات -->
         <section id="main-track-sec" class="hidden space-y-6">
             <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-xl flex items-center justify-between">
                 <div>
@@ -83,6 +84,8 @@
                 </div>
                 <button type="button" onclick="loadStudentOrders()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer shadow"><i class="fa-solid fa-rotate"></i> تحديث</button>
             </div>
+            <!-- مكان أول كود QR جديد ليظهر في أعلى الصفحة مباشرة -->
+            <div id="top-new-qr-container"></div>
             <div id="student-orders-container" class="space-y-4">
                 <p class="text-center text-slate-400 text-xs py-8">لا توجد طلبات محفوظة حالياً.</p>
             </div>
@@ -134,13 +137,13 @@
         let cart = [], productsList = [];
         let selectedSandwichItem = null;
 
-        // صور كفرات احترافية ومطابقة 100% لكل ركن (شاورما، وجبات، سندوتشات، بطاطس، صوصات)
+        // روابط صور دقيقة ومضمونة 100% تعبر عن كل صنف بدقة تامة (شاورما، وجبات، سندوتشات، بطاطس، صوصات)
         const categoryBanners = {
-            'ركن الشاورما': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=1000&q=85',
-            'ركن الوجبات': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000&q=85',
-            'ركن السندوتشات': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1000&q=85',
-            'ركن البطاطس': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=1000&q=85',
-            'ركن الصوصات': 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=1000&q=85'
+            'ركن الشاورما': 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=1000&q=85',
+            'ركن الوجبات': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&q=85',
+            'ركن السندوتشات': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=1000&q=85',
+            'ركن البطاطس': 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=1000&q=85',
+            'ركن الصوصات': 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&q=85'
         };
 
         window.addEventListener('DOMContentLoaded', () => { 
@@ -333,13 +336,21 @@
             myOrders.unshift({ id: orderId, name, phone, items: itemsCopy, total, status: 'pending_pickup', time: new Date().toLocaleTimeString('ar-EG') });
             localStorage.setItem('student_all_orders', JSON.stringify(myOrders));
 
-            cart = []; renderCart(); switchMainTab('track');
+            cart = []; 
+            renderCart(); 
+            switchMainTab('track');
+            
+            // الانتقال الفوري لأعلى الصفحة لإظهار الـ QR Code الجديد مباشرة للعميل
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function loadStudentOrders() {
             const container = document.getElementById('student-orders-container');
+            const topContainer = document.getElementById('top-new-qr-container');
             let localOrders = JSON.parse(localStorage.getItem('student_all_orders') || '[]');
+            
             if(localOrders.length === 0) {
+                topContainer.innerHTML = '';
                 container.innerHTML = `<div class="glass-card text-slate-900 rounded-3xl p-10 text-center space-y-3"><i class="fa-solid fa-qrcode text-5xl text-slate-300"></i><p class="text-xs text-slate-500 font-bold">لا توجد طلبات محفوظة.</p></div>`;
                 return;
             }
@@ -350,7 +361,36 @@
             }
             localStorage.setItem('student_all_orders', JSON.stringify(localOrders));
 
-            container.innerHTML = localOrders.map(o => {
+            // جعل أول طلب (الجديد كلياً) يظهر في أعلى الصفحة ببروز ممتاز
+            const latestOrder = localOrders[0];
+            const isPendingLatest = latestOrder.status === 'pending_pickup';
+
+            topContainer.innerHTML = `
+                <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-2xl border-4 ${isPendingLatest ? 'border-amber-500 bg-white' : 'border-slate-300 bg-slate-50/70 opacity-80'} flex flex-col sm:flex-row items-center justify-between gap-5 mb-6">
+                    <div class="space-y-2 text-right w-full sm:w-auto">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-amber-500 text-slate-950 text-xs px-2.5 py-1 rounded-lg font-black">أحدث طلب</span>
+                            <span class="font-black text-sm text-slate-900">#${latestOrder.id}</span>
+                            <span class="text-xs px-3 py-1 rounded-full font-extrabold ${isPendingLatest ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
+                                ${isPendingLatest ? '🟡 طلب نشط (قيد التجهيز)' : '✅ تم الاستلام بنجاح'}
+                            </span>
+                        </div>
+                        <p class="text-xs font-bold text-slate-700">الاسم: ${latestOrder.name} | الهاتف: ${latestOrder.phone}</p>
+                        <p class="text-xs text-slate-600">المحتويات: ${latestOrder.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
+                        <p class="text-xs font-black text-amber-600">الإجمالي: ${latestOrder.total} ج.م</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="bg-white p-3 rounded-2xl border-2 shadow-md ${isPendingLatest ? 'w-40 h-40 scale-100 border-amber-500' : 'w-24 h-24 opacity-40 filter blur-[0.6px] border-slate-300'} flex items-center justify-center transition-all">
+                            <div id="qr-top-${latestOrder.id}"></div>
+                        </div>
+                        <span class="text-[11px] mt-2 font-bold ${isPendingLatest ? 'text-amber-700' : 'text-slate-400'}">${isPendingLatest ? '📸 اعرض هذا الكود للكاشير' : 'تم استلام هذا الطلب'}</span>
+                    </div>
+                </div>
+            `;
+
+            // باقي الطلبات القديمة بالأسفل
+            const olderOrders = localOrders.slice(1);
+            container.innerHTML = olderOrders.map(o => {
                 const isPending = o.status === 'pending_pickup';
                 return `
                     <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-xl border-2 ${isPending ? 'border-amber-400 bg-white' : 'border-slate-300 bg-slate-50/70 opacity-80'} flex flex-col sm:flex-row items-center justify-between gap-5">
@@ -376,11 +416,14 @@
             }).join('');
 
             setTimeout(() => {
-                localOrders.forEach(o => {
+                const topEl = document.getElementById(`qr-top-${latestOrder.id}`);
+                if(topEl && topEl.innerHTML === '') {
+                    new QRCode(topEl, { text: latestOrder.id, width: 140, height: 140, colorDark: "#0f172a", colorLight: "#ffffff" });
+                }
+                olderOrders.forEach(o => {
                     const el = document.getElementById(`qr-${o.id}`);
                     if(el && el.innerHTML === '') {
-                        const size = o.status === 'pending_pickup' ? 140 : 80;
-                        new QRCode(el, { text: o.id, width: size, height: size, colorDark: "#0f172a", colorLight: "#ffffff" });
+                        new QRCode(el, { text: o.id, width: 80, height: 80, colorDark: "#0f172a", colorLight: "#ffffff" });
                     }
                 });
             }, 100);
