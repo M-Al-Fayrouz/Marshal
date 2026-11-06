@@ -49,7 +49,7 @@
         </div>
     </div>
 
-    <!-- شاشة تسجيل الدخول (مرة واحدة في اليوم) -->
+    <!-- شاشة تسجيل الدخول -->
     <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-amber-500">
             <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow"><i class="fa-solid fa-shield-halved"></i></div>
@@ -69,7 +69,8 @@
                 </div>
                 <nav class="flex items-center gap-2">
                     <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg">الطلبات والماسح</button>
-                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو</button>
+                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو والأسعار</button>
+                    <button type="button" onclick="switchView('images-manager')" id="btn-images" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">تعديل صور الأقسام</button>
                 </nav>
             </div>
         </header>
@@ -124,7 +125,18 @@
 
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
                     <h2 class="font-black text-lg">المنتجات المسجلة (يمكن تعديل السعر فوراً بالنقر عليه)</h2>
-                    <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-slate-400 text-xs py-6">لا توجد منتجات.</p></div>
+                    <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات.</p></div>
+                </div>
+            </div>
+
+            <!-- قسم تعديل صور الأقسام بالروابط مباشرة -->
+            <div id="view-images-manager" class="hidden space-y-6">
+                <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
+                    <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-image text-amber-500"></i> تعديل صور كفرات الأقسام بالروابط المباشرة</h2>
+                    <p class="text-xs text-slate-500">ضع رابط الصورة الجديد (URL) أمام كل قسم وضغط "تحديث الصورة" لتتغير فوراً عند كل الطلاب:</p>
+                    <div id="category-image-inputs" class="space-y-4 pt-2">
+                        <!-- يتم تعبئته برمجياً -->
+                    </div>
                 </div>
             </div>
         </main>
@@ -144,7 +156,7 @@
             if(authTime && (now - authTime < 24 * 60 * 60 * 1000)) {
                 document.getElementById('auth-modal').classList.add('hidden');
                 document.getElementById('admin-content').classList.remove('hidden');
-                fetchAllOrders(); fetchAdminProducts(); startDefaultScanner();
+                fetchAllOrders(); fetchAdminProducts(); renderImageInputs(); startDefaultScanner();
             }
         });
 
@@ -173,7 +185,7 @@
                 localStorage.setItem('admin_auth_timestamp', new Date().getTime());
                 document.getElementById('auth-modal').classList.add('hidden');
                 document.getElementById('admin-content').classList.remove('hidden');
-                fetchAllOrders(); fetchAdminProducts(); startDefaultScanner();
+                fetchAllOrders(); fetchAdminProducts(); renderImageInputs(); startDefaultScanner();
             } else {
                 failedAttempts++;
                 alert(`كلمة المرور غير صحيحة! محاولة (${failedAttempts}/3)`);
@@ -183,10 +195,14 @@
         function switchView(view) {
             document.getElementById('view-orders').classList.toggle('hidden', view !== 'orders');
             document.getElementById('view-menu-manager').classList.toggle('hidden', view !== 'menu-manager');
+            document.getElementById('view-images-manager').classList.toggle('hidden', view !== 'images-manager');
+            
             document.getElementById('btn-orders').className = view === 'orders' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
             document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            document.getElementById('btn-images').className = view === 'images-manager' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            
             if(view === 'orders') startDefaultScanner();
-            else if(html5QrCode) { try { html5QrCode.stop(); } catch(e){} fetchAdminProducts(); }
+            else if(html5QrCode) { try { html5QrCode.stop(); } catch(e){} if(view === 'menu-manager') fetchAdminProducts(); if(view === 'images-manager') renderImageInputs(); }
         }
 
         async function startDefaultScanner() {
@@ -222,35 +238,16 @@
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
                             <span class="font-black text-sm text-slate-900">#${o.id}</span>
-                            <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${o.status === 'pending_pickup' ? 'bg-amber-100 text-amber-800' : o.status === 'ready' ? 'bg-emerald-100 text-emerald-800 font-black animate-pulse' : 'bg-slate-200 text-slate-700'}">
-                                ${o.status === 'pending_pickup' ? '🟡 جارِ التجهيز' : o.status === 'ready' ? '🟢 جاهز للاستلام (إشعار مرسل)' : '✅ تم الاستلام'}
+                            <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${o.status === 'ready' ? 'bg-emerald-100 text-emerald-800 font-black' : 'bg-slate-200 text-slate-700'}">
+                                ${o.status === 'ready' ? '🟢 جاهز للاستلام' : '✅ تم الاستلام'}
                             </span>
                         </div>
                         <p class="text-xs font-bold text-slate-800">${o.student_name} - <span class="text-indigo-600">${o.student_phone}</span></p>
                         <p class="text-xs text-slate-600">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
                         <p class="text-xs font-black text-amber-600">الإجمالي: ${o.total} ج.م</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        ${o.status === 'pending_pickup' ? `
-                            <button type="button" onclick="markReady('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-xl cursor-pointer shadow flex items-center gap-1.5 active:scale-95">
-                                <i class="fa-solid fa-bell"></i> جاهز للاستلام 🚀
-                            </button>
-                        ` : o.status === 'ready' ? `
-                            <button type="button" onclick="manualComplete('${o.id}')" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer shadow">تسليم فوري</button>
-                        ` : ''}
-                    </div>
                 </div>
             `).join('');
-        }
-
-        async function markReady(id) {
-            await db.from('orders').update({ status: 'ready' }).eq('id', id);
-            fetchAllOrders();
-        }
-
-        async function manualComplete(id) {
-            await db.from('orders').update({ status: 'completed' }).eq('id', id);
-            fetchAllOrders();
         }
 
         function updateSalesStats() {
@@ -303,13 +300,43 @@
             fetchAdminProducts();
         }
 
+        async function renderImageInputs() {
+            const container = document.getElementById('category-image-inputs');
+            const categories = ['ركن الشاورما', 'ركن الوجبات', 'ركن السندوتشات', 'ركن البطاطس', 'ركن الصوصات'];
+            
+            const { data } = await db.from('category_banners').select('*');
+            let bannersMap = {};
+            if(data) {
+                data.forEach(item => { bannersMap[item.category_name] = item.image_url; });
+            }
+
+            container.innerHTML = categories.map(cat => `
+                <div class="bg-slate-50 p-4 rounded-2xl border space-y-2">
+                    <label class="font-black text-xs text-slate-900 block">${cat}</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="img-url-${cat}" value="${bannersMap[cat] || ''}" placeholder="ضع رابط الصورة المباشر هنا (URL)..." class="flex-1 text-xs p-3 rounded-xl border bg-white outline-none font-bold">
+                        <button type="button" onclick="updateCategoryBanner('${cat}')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-4 py-2 rounded-xl text-xs cursor-pointer shadow">تحديث الصورة</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateCategoryBanner(cat) {
+            const url = document.getElementById(`img-url-${cat}`).value.trim();
+            if(!url) { alert('برجاء إدخال رابط الصورة.'); return; }
+            
+            const { error } = await db.from('category_banners').upsert([{ category_name: cat, image_url: url }], { onConflict: 'category_name' });
+            if(error) { alert('خطأ في التحديث: ' + error.message); return; }
+            alert(`✅ تم تحديث صورة (${cat}) بنجاح وتطبيقها للمنيو فوراً!`);
+        }
+
         async function handleScannedOrder(code) {
             const feedback = document.getElementById('scan-feedback');
             const cleanCode = code.replace(/^.*#/, '').trim();
             const { data, error } = await db.from('orders').select('*').ilike('id', `%${cleanCode}%`).single();
             
             if(data && !error) {
-                if(data.status === 'ready' || data.status === 'pending_pickup') {
+                if(data.status === 'ready') {
                     await db.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders(); 
                     playBeep(true);
