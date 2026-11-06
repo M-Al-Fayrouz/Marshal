@@ -40,9 +40,12 @@
         <section id="tab-menu" class="space-y-6 animate-fade">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-6">
-                    <h2 class="font-black text-lg text-white flex items-center gap-2"><i class="fa-solid fa-burger text-amber-500"></i> قائمة المأكولات</h2>
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-black text-lg text-white flex items-center gap-2"><i class="fa-solid fa-burger text-amber-500"></i> قائمة المأكولات (المنيو الرسمي)</h2>
+                        <button type="button" onclick="loadMarshallMenu()" class="text-xs bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 px-3 py-1.5 rounded-xl font-bold cursor-pointer border border-amber-500/30"><i class="fa-solid fa-utensils ml-1"></i> تحميل منيو مارشال الأصلي</button>
+                    </div>
                     <div id="products-container" class="space-y-6">
-                        <p class="text-slate-400 text-xs py-12 text-center">جاري تحميل المنتجات...</p>
+                        <p class="text-slate-400 text-xs py-12 text-center">جاري تحميل المنيو...</p>
                     </div>
                 </div>
 
@@ -84,6 +87,67 @@
         let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let cart = [], productsList = [];
 
+        // المنيو الأصلي المبعوث من الصورة (مارشال ركن الشاورما)
+        const marshallDefaultMenu = [
+            // ركن الشاورما
+            { id: 'm1', name: 'شاورما فراخ', price: 120, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
+            { id: 'm2', name: 'شاورما فراخ مشروم', price: 130, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
+            { id: 'm3', name: 'شاورما فراخ موزارايلا', price: 130, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
+            { id: 'm4', name: 'شاورما فراخ بطاطس', price: 125, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
+            { id: 'm5', name: 'شاورما فراخ ايطاليانو', price: 130, category: 'ركن الشاورما', image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500' },
+            
+            // ركن الوجبات
+            { id: 'm6', name: 'شاورما عربي', price: 160, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
+            { id: 'm7', name: 'شاورما ماريا', price: 170, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
+            { id: 'm8', name: 'شاورما تركي', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
+            { id: 'm9', name: 'شاورما ايطالي', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
+            { id: 'm10', name: 'صدور دجاج', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
+            { id: 'm11', name: 'شيش طاووق', price: 180, category: 'ركن الوجبات', image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500' },
+
+            // ركن السندوتشات
+            { id: 'm12', name: 'كريسبي', price: 120, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm13', name: 'زنجر', price: 120, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm14', name: 'فاهيتا', price: 120, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm15', name: 'صدور دجاج مشويه', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm16', name: 'هوت دوج', price: 100, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm17', name: 'كفته', price: 90, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm18', name: 'مشكل لحوم', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm19', name: 'مشكل دجاج', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm20', name: 'سوبر كرأنشي', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm21', name: 'برجر لحم فريش', price: 130, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm22', name: 'برجر لحم فريش دوبل', price: 180, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm23', name: 'تويستر زنجر', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm24', name: 'تويستر كرسبي', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+            { id: 'm25', name: 'كاسديا', price: 150, category: 'ركن السندوتشات', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+
+            // ركن البطاطس
+            { id: 'm26', name: 'ساندوتش فلافل سوري', price: 40, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm27', name: 'سوري عادي', price: 45, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm28', name: 'سوري عادي تشيز', price: 55, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm29', name: 'فينو عادي', price: 70, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm30', name: 'فينو تشيز', price: 80, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm31', name: 'باكيت صغير صوصات', price: 45, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm32', name: 'باكيت كبير صوصات', price: 55, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm33', name: 'باكيت رنش صغير', price: 60, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm34', name: 'باكيت رنش كبير', price: 70, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm35', name: 'باكيت صغير تكساس', price: 60, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm36', name: 'باكيت كبير تكساس', price: 70, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm37', name: 'باكيت زنجر', price: 115, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm38', name: 'باكيت شاورما', price: 110, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm39', name: 'اضافة شيدر', price: 10, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+            { id: 'm40', name: 'اضافة موزاريلا', price: 10, category: 'ركن البطاطس', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500' },
+
+            // ركن الصوصات
+            { id: 'm41', name: 'ثوميه', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
+            { id: 'm42', name: 'ثوميه حاره', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
+            { id: 'm43', name: 'طحينه', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
+            { id: 'm44', name: 'صوص حار', price: 10, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
+            { id: 'm45', name: 'شيدر', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
+            { id: 'm46', name: 'تكساس', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
+            { id: 'm47', name: 'رانشي', price: 15, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' },
+            { id: 'm48', name: 'باربيكيو', price: 10, category: 'ركن الصوصات', image_url: 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=500' }
+        ];
+
         window.addEventListener('DOMContentLoaded', () => { fetchProducts(); loadStudentOrders(); });
 
         function switchTab(tab) {
@@ -96,28 +160,32 @@
 
         async function fetchProducts() {
             const container = document.getElementById('products-container');
-            const { data } = await db.from('products').select('*');
-            if(!data || data.length === 0) { container.innerHTML = `<p class="text-slate-400 text-xs py-12 text-center">لا توجد منتجات مضافة حالياً.</p>`; return; }
-            productsList = data;
+            try {
+                const { data } = await db.from('products').select('*');
+                // لو قاعدة البيانات فاضية أو فيها منتجات، بنعرض المنهج الرسمي أو المحدث من Supabase
+                productsList = (data && data.length > 0) ? data : marshallDefaultMenu;
+            } catch(e) {
+                productsList = marshallDefaultMenu;
+            }
 
             // تجميع المنتجات حسب القسم (Category)
             const categories = {};
             productsList.forEach(p => {
-                const cat = p.category || 'أخرى';
+                const cat = p.category || 'ركن الوجبات';
                 if(!categories[cat]) categories[cat] = [];
                 categories[cat].push(p);
             });
 
             container.innerHTML = Object.keys(categories).map(cat => `
                 <div class="space-y-3">
-                    <h3 class="font-black text-base text-amber-500 border-b border-slate-800 pb-2 flex items-center gap-2">
+                    <h3 class="font-black text-base text-amber-400 border-b border-slate-800 pb-2 flex items-center gap-2">
                         <i class="fa-solid fa-utensils text-xs"></i> ${cat}
                     </h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         ${categories[cat].map(p => `
                             <div class="glass-card text-slate-900 rounded-3xl p-4 shadow-sm flex flex-col justify-between hover:shadow-xl">
                                 <div>
-                                    <div class="h-32 bg-slate-200 rounded-2xl mb-3 overflow-hidden shadow-inner"><img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-full h-full object-cover"></div>
+                                    <div class="h-28 bg-slate-200 rounded-2xl mb-3 overflow-hidden shadow-inner"><img src="${p.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}" class="w-full h-full object-cover"></div>
                                     <h4 class="font-black text-slate-900 text-sm">${p.name}</h4>
                                 </div>
                                 <div class="flex items-center justify-between mt-4 pt-3 border-t">
@@ -129,6 +197,15 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        async function loadMarshallMenu() {
+            if(!confirm('هل تريد حقاً استيراد المنيو الأصلي لمارشال إلى قاعدة البيانات؟')) return;
+            for(let item of marshallDefaultMenu) {
+                await db.from('products').insert([{ name: item.name, category: item.category, price: item.price, image_url: item.image_url }]);
+            }
+            alert('✅ تم تحميل وتعبئة المنيو الأصلي بنجاح!');
+            fetchProducts();
         }
 
         function addToCart(id) {
