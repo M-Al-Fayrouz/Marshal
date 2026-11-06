@@ -14,9 +14,11 @@
         .glass-card { background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes bounceShort { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .animate-short-bounce { animation: bounceShort 0.8s infinite; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950 pb-28">
 
     <!-- الهيدر الرئيسي -->
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-2xl">
@@ -36,13 +38,13 @@
             </nav>
         </div>
 
-        <!-- شريط التنقل السريع بين الأقسام (تنسيق موبايل ممتاز) -->
+        <!-- شريط التنقل السريع بين الأقسام -->
         <div id="category-nav-bar" class="bg-slate-900/90 border-t border-slate-800/80 px-4 py-2.5 overflow-x-auto no-scrollbar flex items-center gap-2">
-            <button onclick="scrollToSection('sec-shawarma')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500 hover:text-slate-950">🔥 ركن الشاورما</button>
-            <button onclick="scrollToSection('sec-meals')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🍱 ركن الوجبات</button>
-            <button onclick="scrollToSection('sec-sandwiches')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🥪 ركن السندوتشات</button>
-            <button onclick="scrollToSection('sec-fries')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🍟 ركن البطاطس</button>
-            <button onclick="scrollToSection('sec-sauces')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-amber-500 hover:text-slate-950">🥣 ركن الصوصات</button>
+            <button onclick="scrollToSection('sec-ركن الشاورما')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30">🔥 ركن الشاورما</button>
+            <button onclick="scrollToSection('sec-ركن الوجبات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🍱 ركن الوجبات</button>
+            <button onclick="scrollToSection('sec-ركن السندوتشات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🥪 ركن السندوتشات</button>
+            <button onclick="scrollToSection('sec-ركن البطاطس')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🍟 ركن البطاطس</button>
+            <button onclick="scrollToSection('sec-ركن الصوصات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🥣 ركن الصوصات</button>
         </div>
     </header>
 
@@ -51,20 +53,20 @@
         <!-- صفحة المنيو -->
         <section id="main-menu-sec" class="space-y-8">
             <div id="menu-sections-container" class="space-y-8">
-                <p class="text-center text-slate-400 text-xs py-12">جاري تحميل المنيو الأسطوري...</p>
+                <p class="text-center text-slate-400 text-xs py-12">جاري تحميل المنيو...</p>
             </div>
 
-            <!-- السلة المثبتة تحت في الموبايل -->
-            <div class="glass-card text-slate-900 rounded-3xl p-5 shadow-2xl space-y-4 border-2 border-amber-400">
+            <!-- سلة الطلبات الأساسية تحت -->
+            <div id="cart-section-box" class="glass-card text-slate-900 rounded-3xl p-5 shadow-2xl space-y-4 border-2 border-amber-400">
                 <h2 class="font-black text-base border-b pb-3 flex items-center justify-between">
-                    <span><i class="fa-solid fa-cart-shopping text-amber-600 ml-2"></i> سلة طلبك</span>
+                    <span><i class="fa-solid fa-cart-shopping text-amber-600 ml-2"></i> سلة طلبك (العربة)</span>
                     <span id="cart-count" class="bg-amber-500 text-slate-950 text-xs px-3 py-0.5 rounded-full font-black">0</span>
                 </h2>
-                <div id="cart-items" class="space-y-2 max-h-44 overflow-y-auto"><p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك الأسطورية!</p></div>
+                <div id="cart-items" class="space-y-2 max-h-48 overflow-y-auto"><p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك!</p></div>
                 <div class="space-y-3 pt-3 border-t">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input type="text" id="student-name" placeholder="اسمك الكريم *" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
-                        <input type="tel" id="student-phone" maxlength="11" placeholder="رقم الهاتف (11 رقم) *" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <input type="text" id="student-name" placeholder="اسمك الكريم *" oninput="saveUserData()" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <input type="tel" id="student-phone" maxlength="11" placeholder="رقم الهاتف (11 رقم) *" oninput="saveUserData()" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
                     <div class="flex justify-between items-center font-black text-slate-900 pt-1">
                         <span class="text-xs">المبلغ الإجمالي:</span>
@@ -92,16 +94,27 @@
         </section>
     </main>
 
-    <!-- نافذة اختيار خيارات العيش (سوري / فينو / تورتيلا) -->
+    <!-- شريط عائم سفلي ينبه الطالب لوجود أصناف في العربة وتنزيله لتحت -->
+    <div id="floating-cart-bar" class="fixed bottom-4 left-4 right-4 z-40 max-w-lg mx-auto bg-amber-500 text-slate-950 p-3.5 rounded-2xl shadow-2xl flex items-center justify-between border-2 border-white transform translate-y-24 transition-all duration-300">
+        <div class="flex items-center gap-2 font-black text-xs">
+            <div class="w-8 h-8 bg-slate-950 text-amber-400 rounded-xl flex items-center justify-center shadow"><i class="fa-solid fa-cart-shopping"></i></div>
+            <span>تم إضافة وجبة للسلة! (<span id="floating-count">0</span> أصناف)</span>
+        </div>
+        <button onclick="scrollToCart()" class="bg-slate-950 text-white font-bold text-xs px-4 py-2 rounded-xl shadow cursor-pointer animate-short-bounce">
+            عرض العربة بالأسفل 👇
+        </button>
+    </div>
+
+    <!-- نافذة اختيار نوع الخبز -->
     <div id="bread-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl border-2 border-amber-500">
-            <h3 id="modal-item-title" class="font-black text-base text-slate-900 border-b pb-2">اختر نوع العيش</h3>
+            <h3 id="modal-item-title" class="font-black text-base text-slate-900 border-b pb-2">اختر نوع الخبز</h3>
             <div id="bread-options-container" class="space-y-2"></div>
-            <button onclick="closeBreadModal()" class="w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">إلغاء</button>
+            <button onclick="closeBreadModal()" class="w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs cursor-pointer">إلغاء</button>
         </div>
     </div>
 
-    <!-- نافذة اقتراح الصوصات قبل إنهاء الطلب -->
+    <!-- نافذة اقتراح الصوصات -->
     <div id="sauces-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 shadow-2xl border-2 border-emerald-500">
             <div class="text-center space-y-1">
@@ -110,10 +123,10 @@
                 <p class="text-xs text-slate-500">اختر من ركن الصوصات الطازجة لإكمال طعم الوجبة:</p>
             </div>
             <div class="grid grid-cols-2 gap-2 text-xs font-bold">
-                <button onclick="quickAddSauce('ثوميه', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>ثومية</span> <span class="text-amber-600">15 ج.م</span></button>
-                <button onclick="quickAddSauce('ثوميه حاره', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>ثومية حارة</span> <span class="text-amber-600">15 ج.م</span></button>
-                <button onclick="quickAddSauce('طحينه', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>طحينة</span> <span class="text-amber-600">15 ج.م</span></button>
-                <button onclick="quickAddSauce('صوص حار', 10)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between"><span>صوص حار</span> <span class="text-amber-600">10 ج.م</span></button>
+                <button onclick="quickAddSauce('ثوميه', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between cursor-pointer"><span>ثومية</span> <span class="text-amber-600">15 ج.م</span></button>
+                <button onclick="quickAddSauce('ثوميه حاره', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between cursor-pointer"><span>ثومية حارة</span> <span class="text-amber-600">15 ج.م</span></button>
+                <button onclick="quickAddSauce('طحينه', 15)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between cursor-pointer"><span>طحينة</span> <span class="text-amber-600">15 ج.م</span></button>
+                <button onclick="quickAddSauce('صوص حار', 10)" class="p-2.5 rounded-xl border bg-slate-50 hover:bg-amber-100 text-right flex justify-between cursor-pointer"><span>صوص حار</span> <span class="text-amber-600">10 ج.م</span></button>
             </div>
             <button onclick="finalSubmitOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-xs shadow-lg cursor-pointer">استمرار وإصدار الـ QR الآن 🚀</button>
         </div>
@@ -126,7 +139,7 @@
         let cart = [], productsList = [];
         let selectedSandwichItem = null;
 
-        // صور كفرات خرافية ثابتة لكل قسم بدون صور عشوائية بائسة
+        // صور كفرات دقيقة ومظبوطة لكل قسم
         const categoryBanners = {
             'ركن الشاورما': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80',
             'ركن الوجبات': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&q=80',
@@ -135,15 +148,23 @@
             'ركن الصوصات': 'https://images.unsplash.com/photo-1472911921383-17293b6e768e?w=800&q=80'
         };
 
-        const categorySectionIds = {
-            'ركن الشاورما': 'sec-shawarma',
-            'ركن الوجبات': 'sec-meals',
-            'ركن السندوتشات': 'sec-sandwiches',
-            'ركن البطاطس': 'sec-fries',
-            'ركن الصوصات': 'sec-sauces'
-        };
+        window.addEventListener('DOMContentLoaded', () => { 
+            fetchProducts(); 
+            loadStudentOrders(); 
+            loadSavedUserData();
+        });
 
-        window.addEventListener('DOMContentLoaded', () => { fetchProducts(); loadStudentOrders(); });
+        function saveUserData() {
+            localStorage.setItem('saved_student_name', document.getElementById('student-name').value);
+            localStorage.setItem('saved_student_phone', document.getElementById('student-phone').value);
+        }
+
+        function loadSavedUserData() {
+            const name = localStorage.getItem('saved_student_name');
+            const phone = localStorage.getItem('saved_student_phone');
+            if(name) document.getElementById('student-name').value = name;
+            if(phone) document.getElementById('student-phone').value = phone;
+        }
 
         function switchMainTab(tab) {
             document.getElementById('main-menu-sec').classList.toggle('hidden', tab !== 'menu');
@@ -154,16 +175,20 @@
             if(tab === 'track') loadStudentOrders();
         }
 
-        function scrollToSection(id) {
-            const el = document.getElementById(id);
+        function scrollToSection(catName) {
+            const el = document.getElementById('sec-' + catName);
             if(el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function scrollToCart() {
+            document.getElementById('cart-section-box').scrollIntoView({ behavior: 'smooth' });
         }
 
         async function fetchProducts() {
             const container = document.getElementById('menu-sections-container');
             const { data } = await db.from('products').select('*');
             if(!data || data.length === 0) { 
-                container.innerHTML = `<div class="text-center py-12"><p class="text-amber-400 font-bold text-sm">المنيو غير محمل بعد في Supabase.</p><p class="text-xs text-slate-400 mt-1">افتح لوحة الإدارة واضغط زرار "رفع منيو مارشال الكامل".</p></div>`; 
+                container.innerHTML = `<div class="text-center py-12"><p class="text-amber-400 font-bold text-sm">المنيو غير محمل بعد في Supabase.</p></div>`; 
                 return; 
             }
             productsList = data;
@@ -176,8 +201,7 @@
             });
 
             container.innerHTML = Object.keys(categories).map(cat => `
-                <div id="${categorySectionIds[cat] || 'sec-gen'}" class="space-y-4">
-                    <!-- كفر القسم الفاجر -->
+                <div id="sec-${cat}" class="space-y-4 pt-2">
                     <div class="relative h-36 rounded-3xl overflow-hidden shadow-xl border border-slate-800">
                         <img src="${categoryBanners[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex items-end p-4">
@@ -185,7 +209,6 @@
                         </div>
                     </div>
 
-                    <!-- قائمة أصناف القسم (نصية وأنيقة بدون صور صغيرة تشوه المظهر) -->
                     <div class="bg-slate-900 rounded-3xl p-3 border border-slate-800 space-y-2">
                         ${categories[cat].map(p => `
                             <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between hover:border-amber-500/50">
@@ -207,15 +230,9 @@
             const item = productsList.find(p => p.id == id);
             if(!item) return;
 
-            // لو ساندوتش يحتاج اختيار نوع العيش
+            // لو ساندوتش يحتاج اختيار عيش
             if(item.category === 'ركن السندوتشات') {
                 openBreadModal(item);
-            } else if(item.category === 'ركن البطاطس') {
-                // خيارات البطاطس والإضافات
-                const addCheese = confirm(`هل تريد إضافة شيدر أو موتزاريللا (+10 ج.م) لساندوتش ${item.name}؟`);
-                const price = addCheese ? item.price + 10 : item.price;
-                const name = addCheese ? `${item.name} (+جبنة)` : item.name;
-                addToCartDirect(item.id, name, price);
             } else {
                 addToCartDirect(item.id, item.name, item.price);
             }
@@ -226,11 +243,10 @@
             document.getElementById('modal-item-title').innerText = `اختر نوع الخبز لـ (${item.name})`;
             const container = document.getElementById('bread-options-container');
             
-            // أسعار أنواع العيش المحددة في المنيو
             container.innerHTML = `
-                <button onclick="selectBread('سوري', ${item.price})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between"><span>عيش سوري</span> <span>${item.price} ج.م</span></button>
-                <button onclick="selectBread('فينو', ${item.price + 10})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between"><span>عيش فينو</span> <span>${item.price + 10} ج.م</span></button>
-                <button onclick="selectBread('تورتيلا', ${item.price + 10})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between"><span>عيش تورتيلا</span> <span>${item.price + 10} ج.م</span></button>
+                <button onclick="selectBread('سوري', ${item.price})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between cursor-pointer"><span>عيش سوري</span> <span>${item.price} ج.م</span></button>
+                <button onclick="selectBread('فينو', ${item.price + 10})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between cursor-pointer"><span>عيش فينو</span> <span>${item.price + 10} ج.م</span></button>
+                <button onclick="selectBread('تورتيلا', ${item.price + 10})" class="w-full p-3 rounded-xl border bg-slate-50 hover:bg-amber-100 font-bold text-xs flex justify-between cursor-pointer"><span>عيش تورتيلا</span> <span>${item.price + 10} ج.م</span></button>
             `;
             document.getElementById('bread-modal').classList.remove('hidden');
         }
@@ -251,18 +267,48 @@
             if(exist) exist.qty += 1; 
             else cart.push({ id, name, price, qty: 1 });
             renderCart();
+            showFloatingBar();
+        }
+
+        function showFloatingBar() {
+            const bar = document.getElementById('floating-cart-bar');
+            const totalCount = cart.reduce((sum, i) => sum + i.qty, 0);
+            document.getElementById('floating-count').innerText = totalCount;
+            bar.classList.remove('translate-y-24');
         }
 
         function renderCart() {
             const container = document.getElementById('cart-items');
             const totalEl = document.getElementById('cart-total'), countEl = document.getElementById('cart-count');
-            if(cart.length === 0) { container.innerHTML = `<p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك الأسطورية!</p>`; totalEl.innerText = `0 ج.م`; countEl.innerText = `0`; return; }
+            if(cart.length === 0) { 
+                container.innerHTML = `<p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك!</p>`; 
+                totalEl.innerText = `0 ج.م`; 
+                countEl.innerText = `0`; 
+                document.getElementById('floating-cart-bar').classList.add('translate-y-24');
+                return; 
+            }
             let total = 0, count = 0;
             container.innerHTML = cart.map((item, idx) => {
                 total += item.price * item.qty; count += item.qty;
-                return `<div class="flex justify-between items-center text-xs bg-slate-50 p-2.5 rounded-2xl border"><div><p class="font-bold text-slate-900">${item.name}</p><p class="text-slate-500">${item.price} × ${item.qty}</p></div><div class="flex items-center gap-1.5"><button type="button" onclick="cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(${idx},1); renderCart();" class="w-7 h-7 bg-slate-200 rounded-xl font-black">-</button><span class="font-black px-1">${item.qty}</span><button type="button" onclick="cart[idx].qty++; renderCart();" class="w-7 h-7 bg-slate-200 rounded-xl font-black">+</button></div></div>`;
+                return `
+                    <div class="flex justify-between items-center text-xs bg-slate-50 p-2.5 rounded-2xl border">
+                        <div><p class="font-bold text-slate-900">${item.name}</p><p class="text-amber-600 font-bold">${item.price * item.qty} ج.م</p></div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="updateQty(${idx}, -1)" class="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded-xl font-black cursor-pointer">-</button>
+                            <span class="font-black px-1">${item.qty}</span>
+                            <button type="button" onclick="updateQty(${idx}, 1)" class="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded-xl font-black cursor-pointer">+</button>
+                        </div>
+                    </div>
+                `;
             }).join('');
-            totalEl.innerText = `${total} ج.م`; countEl.innerText = count;
+            totalEl.innerText = `${total} ج.م`; 
+            countEl.innerText = count;
+        }
+
+        function updateQty(idx, change) {
+            cart[idx].qty += change;
+            if(cart[idx].qty <= 0) cart.splice(idx, 1);
+            renderCart();
         }
 
         function promptSaucesModal() {
