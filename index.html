@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- منع الزوم التلقائي في الموبايل بتثبيت الشاشة على مقاس العرض -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مارشال - ركن الشاورما | طلبات الطلاب</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { font-family: 'Tajawal', sans-serif; transition: all 0.2s ease; scroll-behavior: smooth; }
-        /* منع الزوم نهائياً بالتحكم في حجم الخط الأدنى 16px للحقول */
         input, select, textarea { font-size: 16px !important; }
         .glass-card { background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -41,11 +39,11 @@
         </div>
 
         <div id="category-nav-bar" class="bg-slate-900/90 border-t border-slate-800/80 px-4 py-2.5 overflow-x-auto no-scrollbar flex items-center gap-2">
-            <button onclick="scrollToSection('ركن الشاورما')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30">🔥 ركن الشاورما</button>
-            <button onclick="scrollToSection('ركن الوجبات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🍱 ركن الوجبات</button>
-            <button onclick="scrollToSection('ركن السندوتشات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🥪 ركن السندوتشات</button>
-            <button onclick="scrollToSection('ركن البطاطس')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🍟 ركن البطاطس</button>
+            <button onclick="scrollToSection('ركن الوجبات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30">🍱 ركن الوجبات</button>
+            <button onclick="scrollToSection('ركن الشاورما')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🔥 ركن الشاورما</button>
             <button onclick="scrollToSection('ركن الصوصات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🥣 ركن الصوصات</button>
+            <button onclick="scrollToSection('ركن البطاطس')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🍟 ركن البطاطس</button>
+            <button onclick="scrollToSection('ركن السندوتشات')" class="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">🥪 ركن السندوتشات</button>
         </div>
     </header>
 
@@ -64,7 +62,6 @@
                 <div id="cart-items" class="space-y-2 max-h-48 overflow-y-auto"><p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك!</p></div>
                 <div class="space-y-3 pt-3 border-t">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <!-- حجم الخط 16px لمنع الزوم التلقائي عند الكتابة في الهواتف -->
                         <input type="text" id="student-name" placeholder="اسمك الكريم *" oninput="saveUserData()" class="w-full text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
                         <input type="tel" id="student-phone" maxlength="11" placeholder="رقم الهاتف (11 رقم) *" oninput="saveUserData()" class="w-full text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
@@ -139,6 +136,15 @@
         let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let cart = [], productsList = [], categoryImages = {};
 
+        // ربط الصور التي قمت برفعها مباشرة بالأقسام الخاصة بها بناءً على اختيارك
+        const defaultCategoryImages = {
+            'ركن الوجبات': 'IMG_0635.PNG', // أو رابط الصورة
+            'ركن الشاورما': 'IMG_0633.JPG',
+            'ركن الصوصات': 'IMG_0636.jpg',
+            'ركن البطاطس': 'IMG_0637.JPG',
+            'ركن السندوتشات': 'IMG_0634.JPG'
+        };
+
         window.addEventListener('DOMContentLoaded', () => { 
             fetchCategoryImages();
             fetchProducts(); 
@@ -203,17 +209,8 @@
                 categories[cat].push(p);
             });
 
-            // الصور الافتراضية لكل قسم في حال لم يتم تعديلها من لوحة الكاشير
-            const defaultBanners = {
-                'ركن الشاورما': 'https://images.unsplash.com/photo-1561651823-34feb02255e4?w=1000&q=85',
-                'ركن الوجبات': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&q=85',
-                'ركن السندوتشات': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000&q=85',
-                'ركن البطاطس': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=1000&q=85',
-                'ركن الصوصات': 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&q=85'
-            };
-
             container.innerHTML = Object.keys(categories).map(cat => {
-                const bannerImg = categoryImages[cat] || defaultBanners[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000';
+                const bannerImg = categoryImages[cat] || defaultCategoryImages[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000';
                 return `
                     <div id="sec-${cat}" class="space-y-4 pt-2">
                         <div class="relative h-44 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/35">
