@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { font-family: 'Tajawal', sans-serif; transition: all 0.2s ease; }
-        /* منع الزوم التلقائي نهائياً عند الكتابة أو النقر في الموبايل */
         input, select, textarea { font-size: 16px !important; }
         .glass-card { background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         #reader video { width: 100% !important; height: 280px !important; object-fit: cover !important; border-radius: 1rem !important; }
@@ -71,8 +70,7 @@
                 </div>
                 <nav class="flex items-center gap-2">
                     <button type="button" onclick="switchView('orders')" id="btn-orders" class="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg">الطلبات والماسح</button>
-                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو</button>
-                    <button type="button" onclick="switchView('images-manager')" id="btn-images" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">صور الأقسام</button>
+                    <button type="button" onclick="switchView('menu-manager')" id="btn-menu" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">إدارة المنيو والأسعار</button>
                 </nav>
             </div>
         </header>
@@ -107,18 +105,18 @@
                 </div>
             </div>
 
-            <!-- إدارة المنيو والأسعار (بدون تكبير الشاشة) -->
+            <!-- إدارة المنيو والأسعار -->
             <div id="view-menu-manager" class="hidden space-y-6">
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
                     <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-plus text-amber-500"></i> إضافة وجبة جديدة</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                         <input type="text" id="p-name" placeholder="اسم الوجبة" class="text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
                         <select id="p-category" class="text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
-                            <option value="ركن الشاورما">ركن الشاورما</option>
-                            <option value="ركن الوجبات">ركن الوجبات</option>
-                            <option value="ركن السندوتشات">ركن السندوتشات</option>
-                            <option value="ركن البطاطس">ركن البطاطس</option>
-                            <option value="ركن الصوصات">ركن الصوصات</option>
+                            <option value="ركن الوجبات">🍱 ركن الوجبات</option>
+                            <option value="ركن الشاورما">🔥 ركن الشاورما</option>
+                            <option value="ركن الصوصات">🥣 ركن الصوصات</option>
+                            <option value="ركن البطاطس">🍟 ركن البطاطس</option>
+                            <option value="ركن السندوتشات">🥪 ركن السندوتشات</option>
                         </select>
                         <input type="number" id="p-price" placeholder="السعر (ج.م)" class="text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
@@ -128,17 +126,6 @@
                 <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
                     <h2 class="font-black text-lg">المنتجات المسجلة (تعديل فوري للأسعار)</h2>
                     <div id="admin-products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"><p class="text-slate-400 text-xs py-4 col-span-3 text-center">لا توجد منتجات.</p></div>
-                </div>
-            </div>
-
-            <!-- قسم تعديل صور الأقسام من الاستوديو مباشرة -->
-            <div id="view-images-manager" class="hidden space-y-6">
-                <div class="glass-card text-slate-900 p-6 rounded-3xl shadow-xl space-y-4">
-                    <h2 class="font-black text-lg border-b pb-3 flex items-center gap-2"><i class="fa-solid fa-images text-amber-500"></i> تغيير صور كفرات الأقسام من الاستوديو</h2>
-                    <p class="text-xs text-slate-500">اختر القسم، ثم اختر الصورة مباشرة من استوديو جهازك ليتم حفظها وتحديثها فوراً:</p>
-                    <div id="category-image-inputs" class="space-y-4 pt-2">
-                        <!-- يتم تعبئته برمجياً -->
-                    </div>
                 </div>
             </div>
         </main>
@@ -158,7 +145,7 @@
             if(authTime && (now - authTime < 24 * 60 * 60 * 1000)) {
                 document.getElementById('auth-modal').classList.add('hidden');
                 document.getElementById('admin-content').classList.remove('hidden');
-                fetchAllOrders(); fetchAdminProducts(); renderImageInputs(); startDefaultScanner();
+                fetchAllOrders(); fetchAdminProducts(); startDefaultScanner();
             }
         });
 
@@ -187,7 +174,7 @@
                 localStorage.setItem('admin_auth_timestamp', new Date().getTime());
                 document.getElementById('auth-modal').classList.add('hidden');
                 document.getElementById('admin-content').classList.remove('hidden');
-                fetchAllOrders(); fetchAdminProducts(); renderImageInputs(); startDefaultScanner();
+                fetchAllOrders(); fetchAdminProducts(); startDefaultScanner();
             } else {
                 failedAttempts++;
                 alert(`كلمة المرور غير صحيحة! محاولة (${failedAttempts}/3)`);
@@ -197,14 +184,12 @@
         function switchView(view) {
             document.getElementById('view-orders').classList.toggle('hidden', view !== 'orders');
             document.getElementById('view-menu-manager').classList.toggle('hidden', view !== 'menu-manager');
-            document.getElementById('view-images-manager').classList.toggle('hidden', view !== 'images-manager');
             
             document.getElementById('btn-orders').className = view === 'orders' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
             document.getElementById('btn-menu').className = view === 'menu-manager' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
-            document.getElementById('btn-images').className = view === 'images-manager' ? "px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 cursor-pointer shadow-lg" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
             
             if(view === 'orders') startDefaultScanner();
-            else if(html5QrCode) { try { html5QrCode.stop(); } catch(e){} if(view === 'menu-manager') fetchAdminProducts(); if(view === 'images-manager') renderImageInputs(); }
+            else if(html5QrCode) { try { html5QrCode.stop(); } catch(e){} fetchAdminProducts(); }
         }
 
         async function startDefaultScanner() {
@@ -302,50 +287,6 @@
             fetchAdminProducts();
         }
 
-        async function renderImageInputs() {
-            const container = document.getElementById('category-image-inputs');
-            const categories = ['ركن الشاورما', 'ركن الوجبات', 'ركن السندوتشات', 'ركن البطاطس', 'ركن الصوصات'];
-            
-            const { data } = await db.from('category_banners').select('*');
-            let bannersMap = {};
-            if(data) {
-                data.forEach(item => { bannersMap[item.category_name] = item.image_url; });
-            }
-
-            container.innerHTML = categories.map(cat => `
-                <div class="bg-slate-50 p-4 rounded-2xl border space-y-3">
-                    <label class="font-black text-xs text-slate-900 block">${cat}</label>
-                    <div class="flex items-center gap-3">
-                        <div class="w-16 h-16 rounded-xl overflow-hidden border bg-white flex items-center justify-center shrink-0">
-                            <img id="preview-${cat.replace(/\s+/g, '')}" src="${bannersMap[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex-1 space-y-1">
-                            <input type="file" accept="image/*" id="file-${cat.replace(/\s+/g, '')}" onchange="uploadCategoryBannerImage('${cat}')" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 cursor-pointer">
-                            <p class="text-[10px] text-slate-400">اختر صورة مباشرة من الاستوديو لتحديث الكفر فوراً</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function uploadCategoryBannerImage(cat) {
-            const fileInput = document.getElementById(`file-${cat.replace(/\s+/g, '')}`);
-            const file = fileInput.files[0];
-            if(!file) return;
-
-            // تحويل الصورة المرفوعة من الاستوديو إلى Base64 لتخزينها بسلاسة تامة بدون تعقيد بريدج الـ Storage
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const base64Image = e.target.result;
-                const { error } = await db.from('category_banners').upsert([{ category_name: cat, image_url: base64Image }], { onConflict: 'category_name' });
-                if(error) { alert('خطأ في حفظ الصورة: ' + error.message); return; }
-                
-                document.getElementById(`preview-${cat.replace(/\s+/g, '')}`).src = base64Image;
-                alert(`✅ تم تحديث صورة (${cat}) من الاستوديو بنجاح وتطبيقها للمنيو فوراً!`);
-            };
-            reader.readAsDataURL(file);
-        }
-
         async function handleScannedOrder(code) {
             const feedback = document.getElementById('scan-feedback');
             const cleanCode = code.replace(/^.*#/, '').trim();
@@ -378,7 +319,7 @@
 
                 document.getElementById('error-title').innerText = "كود غير صحيح! ❌";
                 document.getElementById('error-details').innerHTML = `الكود المدخل <strong>(${cleanCode})</strong> غير موجود في سجلات قاعدة البيانات.`;
-                document.getElementById('error-popup').classList.remove('hidden');
+                document.getElementById('error-popup').classList.add('hidden');
                 feedback.className = "text-center text-xs font-bold py-3 rounded-2xl bg-rose-100 text-rose-800 shadow-sm";
                 feedback.innerText = `❌ الكود غير صحيح!`;
             }
