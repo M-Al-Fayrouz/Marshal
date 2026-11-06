@@ -29,8 +29,8 @@
                 </div>
             </div>
             <nav class="flex items-center gap-2">
-                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer">المنيو والطلب</button>
-                <button type="button" onclick="switchTab('track')" id="nav-track" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer">حالة طلبي والـ QR</button>
+                <button type="button" onclick="switchTab('menu')" id="nav-menu" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow">المنيو والطلب</button>
+                <button type="button" onclick="switchTab('track')" id="nav-track" class="px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow">حالة طلبي والـ QR</button>
             </nav>
         </div>
     </header>
@@ -42,7 +42,7 @@
                 <i class="fa-solid fa-bolt text-2xl animate-bounce"></i>
                 <div>
                     <h2 class="font-bold text-sm sm:text-base">اطلب وجبتك الآن بدون زحمة الكاونتر!</h2>
-                    <p class="text-xs opacity-90">اطلب، خد كود الـ QR، وتابع حالة طلبك لحظة بلحظة.</p>
+                    <p class="text-xs opacity-90">اطلب، احصل على كود الـ QR، وتابع حالة طلبك لحظة بلحظة.</p>
                 </div>
             </div>
 
@@ -103,7 +103,7 @@
             <div id="order-tracking-card" class="hidden glass-card text-slate-900 rounded-2xl p-6 shadow-xl space-y-5 text-center border-2 border-indigo-500">
                 <div class="flex justify-between items-center border-b pb-3">
                     <span class="text-xs font-bold text-slate-500">رقم الطلب: <strong id="track-order-id" class="text-sm">#--</strong></span>
-                    <span id="track-status-badge" class="text-xs px-3 py-1 rounded-full font-extrabold bg-amber-100 text-amber-800 animate-pulse">قيد التجهيز الاستلام</span>
+                    <span id="track-status-badge" class="text-xs px-3 py-1 rounded-full font-extrabold bg-amber-100 text-amber-800 animate-pulse">قيد التجهيز للاستلام</span>
                 </div>
 
                 <div class="p-6 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 flex flex-col items-center justify-center space-y-3">
@@ -136,14 +136,23 @@
         window.addEventListener('DOMContentLoaded', () => {
             fetchProducts();
             checkUrlParams();
+            loadOrderTracking();
+            
+            // تحديث حالة الطلب والمنيو لحظياً من السيرفر
             setInterval(loadOrderTracking, 3000); 
+
+            supabase.channel('public:products')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+                    fetchProducts();
+                })
+                .subscribe();
         });
 
         function switchTab(tab) {
             document.getElementById('tab-menu').classList.toggle('hidden', tab !== 'menu');
             document.getElementById('tab-track').classList.toggle('hidden', tab !== 'track');
-            document.getElementById('nav-menu').className = tab === 'menu' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
-            document.getElementById('nav-track').className = tab === 'track' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer";
+            document.getElementById('nav-menu').className = tab === 'menu' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
+            document.getElementById('nav-track').className = tab === 'track' ? "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow" : "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
             if(tab === 'track') loadOrderTracking();
         }
 
@@ -229,7 +238,7 @@
                 status: 'pending_pickup'
             }]);
 
-            if(error) { alert('حدث خطأ أثناء إرسال الطلب، حاول ثانيةً.'); return; }
+            if(error) { alert('حدث خطأ أثناء إرسال الطلب، تأكد من الاتصال.'); return; }
 
             localStorage.setItem('active_order_id', orderId);
             cart = []; renderCart();
@@ -265,17 +274,18 @@
             }
 
             const qrContainer = document.getElementById('qrcode-canvas');
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: data.id, width: 160, height: 160,
-                colorDark: data.status === 'completed' ? "#047857" : "#0f172a",
-                colorLight: "#ffffff"
-            });
+            if (qrContainer.innerHTML === '') {
+                new QRCode(qrContainer, {
+                    text: data.id, width: 160, height: 160,
+                    colorDark: "#0f172a",
+                    colorLight: "#ffffff"
+                });
+            }
         }
 
         function copyLink() {
             navigator.clipboard.writeText(window.location.href);
-            alert('تم نسخ رابط التتبع!');
+            alert('تم نسخ رابط التتبع بنجاح!');
         }
 
         function checkUrlParams() {
