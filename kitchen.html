@@ -43,7 +43,7 @@
         <div id="view-orders" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
-                    <div><p class="text-xs text-slate-500 font-bold">إجمالي مبيعات اليوم</p><h3 id="sales-amount" class="text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3></div>
+                    <div><p class="text-xs text-slate-500 font-bold">إجمالي المبيعات الكلية</p><h3 id="sales-amount" class="text-2xl font-black text-emerald-600 mt-1">0 ج.م</h3></div>
                     <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-wallet"></i></div>
                 </div>
                 <div class="glass-card text-slate-900 p-4 rounded-2xl border-l-4 border-indigo-500 flex items-center justify-between">
@@ -64,11 +64,11 @@
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                     <div class="flex justify-between items-center">
                         <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا الفوري</h2>
-                        <button onclick="restartScanner()" class="text-[11px] bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded-lg font-bold cursor-pointer"><i class="fa-solid fa-rotate"></i> إعادة تشغيل الكاميرا</button>
+                        <button onclick="toggleScanner()" id="scanner-toggle-btn" class="text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow"><i class="fa-solid fa-power-off ml-1"></i> تشغيل الكاميرا</button>
                     </div>
-                    <p class="text-xs text-slate-500">وجه الكاميرا نحو كود الـ QR الخاص بالطالب لإتمام التسليم تلقائياً:</p>
-                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px]"></div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">الكاميرا جاهزة للعمل...</div>
+                    <p class="text-xs text-slate-500">اضغط زر التشغيل ثم وجه الكاميرا نحو كود الـ QR:</p>
+                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px] flex items-center justify-center text-slate-400 text-xs">الكاميرا مغلقة حالياً</div>
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">اضغط "تشغيل الكاميرا" للبدء</div>
                 </div>
 
                 <!-- Orders List -->
@@ -120,11 +120,10 @@
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
-            initScanner();
 
-            // الاستماع للطلبات الجديدة لحظياً عبر Supabase Realtime مع تشغيل الإشعار الصوتي
+            // الاستماع للطلبات الجديدة لحظياً عبر Supabase Realtime وتشغيل تنبيه صوتي
             supabase.channel('public:orders')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
                     playNotificationSound();
                     fetchAllOrders();
                 })
@@ -134,19 +133,19 @@
                 .subscribe();
         });
 
-        // دالة إصدار إشعار صوتي عند وصول طلب جديد بدون الحاجة لملفات خارجية
+        // تشغيل إشعار صوتي فوري عند وصول طلب جديد
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // نغمة D5
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime); // نغمة E5 عالية ومسموعة
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.3);
+                oscillator.stop(audioCtx.currentTime + 0.4);
             } catch(e) {
                 console.log('Audio error:', e);
             }
@@ -163,14 +162,15 @@
                 menuView.classList.add('hidden');
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
-                setTimeout(initScanner, 300);
             } else if (view === 'menu-manager') {
                 ordersView.classList.add('hidden');
                 menuView.classList.remove('hidden');
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
                 
-                stopScanner();
+                if (isScanningActive) {
+                    stopScanner();
+                }
                 fetchAdminProducts();
             }
         }
@@ -241,7 +241,7 @@
             }]);
 
             if (error) { 
-                alert('خطأ في الاتصال بقاعدة البيانات (تأكد من صلاحيات RLS في Supabase): ' + error.message); 
+                alert('خطأ في قاعدة البيانات (تأكد من إلغاء RLS في جدول products): ' + error.message); 
                 return; 
             }
 
@@ -307,55 +307,66 @@
             document.getElementById('completed-count').innerText = `${completed.length} طلب`;
         }
 
-        // تشغيل الكاميرا بشكل مستقر ومستمر 24/7 بدون تعليق
-        async function initScanner() {
-            if (isScanningActive) return;
-            
+        // تشغيل وإيقاف الكاميرا بزر صريح لتجنب التعليق
+        async function toggleScanner() {
+            if (isScanningActive) {
+                await stopScanner();
+            } else {
+                await startScanner();
+            }
+        }
+
+        async function startScanner() {
             const readerEl = document.getElementById('reader');
-            if (!readerEl) return;
+            const toggleBtn = document.getElementById('scanner-toggle-btn');
+            const feedback = document.getElementById('scan-feedback');
 
             try {
+                readerEl.innerHTML = "";
                 if (!html5QrCode) {
                     html5QrCode = new Html5Qrcode("reader");
                 }
                 
-                const config = { fps: 10, qrbox: { width: 220, height: 220 } };
-                
                 await html5QrCode.start(
                     { facingMode: "environment" }, 
-                    config, 
+                    { fps: 10, qrbox: { width: 220, height: 220 } }, 
                     async (decodedText) => {
                         await handleScannedOrder(decodedText.trim());
                     },
-                    (errorMessage) => {
-                        // تجاهل أخطاء الإطار المتكررة لكي لا تعطل المتصفح
-                    }
+                    (errorMessage) => {}
                 );
+
                 isScanningActive = true;
-                document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
-                document.getElementById('scan-feedback').innerText = "الكاميرا تعمل وجاهزة للمسح...";
+                toggleBtn.className = "text-[11px] bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-power-off ml-1"></i> إيقاف الكاميرا`;
+                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
+                feedback.innerText = "الكاميرا تعمل، وجهها نحو كود الـ QR...";
             } catch (err) {
                 console.error("Camera start error:", err);
                 isScanningActive = false;
-                document.getElementById('scan-feedback').className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                document.getElementById('scan-feedback').innerText = "تعذر فتح الكاميرا (تأكد من إعطاء إذن الكاميرا أو استخدام HTTPS).";
+                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
+                feedback.innerText = "تعذر تشغيل الكاميرا (تأكد من السماح بإذن الكاميرا من المتصفح).";
             }
         }
 
         async function stopScanner() {
+            const toggleBtn = document.getElementById('scanner-toggle-btn');
+            const feedback = document.getElementById('scan-feedback');
+            const readerEl = document.getElementById('reader');
+
             if (html5QrCode && isScanningActive) {
                 try {
                     await html5QrCode.stop();
-                    isScanningActive = false;
                 } catch(e) {
-                    console.error("Stop scanner error:", e);
+                    console.log("Stop error:", e);
                 }
+                isScanningActive = false;
             }
-        }
-
-        async function restartScanner() {
-            await stopScanner();
-            setTimeout(initScanner, 500);
+            toggleBtn.className = "text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow";
+            toggleBtn.innerHTML = `<i class="fa-solid fa-power-off ml-1"></i> تشغيل الكاميرا`;
+            readerEl.innerHTML = "الكاميرا مغلقة حالياً";
+            feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700";
+            feedback.innerText = "اضغط 'تشغيل الكاميرا' للبدء";
         }
 
         async function handleScannedOrder(code) {
@@ -365,6 +376,7 @@
             if (data && !error) {
                 if (data.status === 'pending_pickup') {
                     await supabase.from('orders').update({ status: 'completed' }).eq('id', data.id);
+                    playNotificationSound();
                     fetchAllOrders();
                     feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-100 text-emerald-800";
                     feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
@@ -374,16 +386,15 @@
                 }
             } else {
                 feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ كود غير صحيح: (${code})`;
+                feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
             }
 
-            // إعادة ضبط رسالة الكاميرا بعد 3 ثواني مع بقاء الكاميرا مفتوحة ومستمرة
             setTimeout(() => {
                 if(isScanningActive) {
                     feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
-                    feedback.innerText = "الكاميرا تعمل وجاهزة للمسح...";
+                    feedback.innerText = "الكاميرا تعمل، وجهها نحو كود الـ QR...";
                 }
-            }, 3000);
+            }, 3500);
         }
     </script>
 </body>
