@@ -13,29 +13,32 @@
         * { font-family: 'Tajawal', sans-serif; }
         .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         #reader video { width: 100% !important; height: 260px !important; object-fit: cover !important; border-radius: 0.75rem !important; }
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            70% { transform: scale(1.1); opacity: 1; }
+        @keyframes epicPop {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.15); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-epic { animation: epicPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
-    <!-- نافذة منبثقة تفاعلية فاجرة لتأكيد النجاح -->
-    <div id="success-popup" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-4 shadow-2xl border-4 border-emerald-500 animate-pop">
-            <div class="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full mx-auto flex items-center justify-center text-5xl shadow-lg">
-                <i class="fa-solid fa-check animate-bounce"></i>
+    <!-- نافذة منبثقة فاجرة جداً عند المسح الناجح -->
+    <div id="success-popup" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-md w-full text-center space-y-5 shadow-2xl border-4 border-emerald-500 animate-epic">
+            <div class="w-28 h-28 bg-emerald-100 text-emerald-600 rounded-full mx-auto flex items-center justify-center text-6xl shadow-xl">
+                <i class="fa-solid fa-circle-check animate-bounce"></i>
             </div>
-            <h2 class="font-black text-2xl text-emerald-700">تم تأكيد وتسليم الطلب بنجاح! 🔥</h2>
-            <p id="popup-order-details" class="text-sm font-bold text-slate-700 bg-emerald-50 p-3 rounded-xl border border-emerald-200">--</p>
-            <button type="button" onclick="closeSuccessPopup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-sm shadow-lg cursor-pointer">مواطن / متابعة المسح</button>
+            <div>
+                <h2 class="font-black text-3xl text-emerald-700">تم تسليم الطلب بنجاح! 🔥</h2>
+                <p class="text-xs text-slate-500 mt-1">تم مسح الكود واعتماد الطلب فوراً</p>
+            </div>
+            <div id="popup-order-details" class="text-xs font-bold text-slate-800 bg-emerald-50 p-4 rounded-2xl border border-emerald-200 leading-relaxed space-y-1">--</div>
+            <button type="button" onclick="closeSuccessPopup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl text-sm shadow-xl cursor-pointer transition transform active:scale-95">استمرار المسح للطلب التالي</button>
         </div>
     </div>
 
-    <!-- شاشة إدخال كلمة المرور (2529) -->
+    <!-- شاشة تسجيل الدخول بالباسورد (2529) -->
     <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
         <div class="glass-card text-slate-900 p-8 rounded-3xl max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-indigo-500">
             <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow"><i class="fa-solid fa-lock"></i></div>
@@ -46,7 +49,7 @@
         </div>
     </div>
 
-    <!-- محتوى لوحة الكاشير -->
+    <!-- محتوى الكاشير الرئيسي -->
     <div id="admin-content" class="hidden flex-1 flex flex-col">
         <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 shadow-md">
             <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -77,9 +80,9 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                         <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح الـ QR الفوري</h2>
-                        <p class="text-xs text-slate-500">وجه الكاميرا نحو كود الـ QR الخاص بالطالب:</p>
+                        <p class="text-xs text-slate-500">الكاميرا جاهزة لقراءة كود الطالب تلقائياً:</p>
                         <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[260px]"></div>
-                        <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-50 text-emerald-700">الكاميرا جاهزة للماسح...</div>
+                        <div id="scan-feedback" class="text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-50 text-emerald-700">الكاميرا تعمل وجاهزة للماسح...</div>
                     </div>
                     <div class="lg:col-span-2 glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
                         <h2 class="font-bold text-base flex items-center justify-between">
@@ -115,6 +118,24 @@
         let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let orders = [], productsList = [], html5QrCode = null;
         let isProcessingScan = false;
+
+        // دالة تشغيل صوت تنبيه الكاشير (Beep) عبر AudioContext
+        function playSuccessBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // نغمة عالية واضحة
+                osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch(e) {}
+        }
 
         function verifyPassword() {
             const pass = document.getElementById('admin-pass').value.trim();
@@ -227,16 +248,30 @@
             const { data, error } = await db.from('orders').select('*').ilike('id', `%${cleanCode}%`).single();
             if(data && !error) {
                 if(data.status === 'pending_pickup') {
-                    // تحديث الطلب وإعطاء علامة الصح الفاجرة والتنبيه
+                    // تحديث الحالة في قاعدة البيانات
                     await db.from('orders').update({ status: 'completed' }).eq('id', data.id);
                     fetchAllOrders();
-                    
-                    // إظهار نافذة النجاح الكبيرة الفاجرة
-                    document.getElementById('popup-order-details').innerText = `الطلب: #${data.id} | الطالب: ${data.student_name} | الإجمالي: ${data.total} ج.م`;
+
+                    // 1. تشغيل صوت الرنة الكاشير (Beep)
+                    playSuccessBeep();
+
+                    // 2. تشغيل الهتزاز (Vibration) للجهاز (لو يدعمها الموبايل)
+                    if (navigator.vibrate) {
+                        navigator.vibrate([200, 100, 200]);
+                    }
+
+                    // 3. عرض نافذة النجاح الفاجرة الكبيرة
+                    document.getElementById('popup-order-details').innerHTML = `
+                        <strong>رقم الطلب:</strong> #${data.id}<br>
+                        <strong>اسم الطالب:</strong> ${data.student_name}<br>
+                        <strong>رقم الهاتف:</strong> ${data.student_phone}<br>
+                        <strong>المحتويات:</strong> ${data.items.map(i => `${i.name} (x${i.qty})`).join(', ')}<br>
+                        <strong>إجمالي الدفع:</strong> <span class="text-amber-600 font-black">${data.total} ج.م</span>
+                    `;
                     document.getElementById('success-popup').classList.remove('hidden');
-                    
+
                     feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-emerald-100 text-emerald-800";
-                    feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح!`;
+                    feedback.innerText = `✅ تم تسليم الطلب (${data.id}) بنجاح وتنبيه الكاشير!`;
                 } else {
                     feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-blue-100 text-blue-800";
                     feedback.innerText = `ℹ️ الطلب (${data.id}) مسلّم مسبقاً!`;
@@ -244,7 +279,7 @@
                 }
             } else {
                 feedback.className = "text-center text-xs font-bold py-2.5 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ الكود (${cleanCode}) غير موجود!`;
+                feedback.innerText = `❌ الكود (${cleanCode}) غير مسجل في النظام!`;
                 setTimeout(() => { isProcessingScan = false; }, 2000);
             }
         }
