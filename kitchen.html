@@ -15,6 +15,10 @@
     <style>
         * { font-family: 'Tajawal', sans-serif; }
         .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
+        /* تخصيص إطار ماسح الـ QR ليكون احترافياً ومنظمًا */
+        #reader video { width: 100% !important; height: 240px !important; object-fit: cover !important; border-radius: 0.75rem !important; }
+        #reader__dashboard_section_csr button, #reader__dashboard_section_swaplink { background: #4f46e5 !important; color: white !important; padding: 6px 12px !important; border-radius: 8px !important; font-size: 11px !important; border: none !important; cursor: pointer !important; margin-top: 5px !important; }
+        #reader__dashboard_section_csr span { font-size: 11px !important; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
@@ -62,13 +66,10 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Camera Scanner -->
                 <div class="glass-card text-slate-900 p-5 rounded-2xl shadow-sm space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i> ماسح الكاميرا الفوري</h2>
-                        <button onclick="toggleScanner()" id="scanner-toggle-btn" class="text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow"><i class="fa-solid fa-power-off ml-1"></i> تشغيل الكاميرا</button>
-                    </div>
-                    <p class="text-xs text-slate-500">اضغط زر التشغيل ثم وجه الكاميرا نحو كود الـ QR:</p>
-                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[220px] flex items-center justify-center text-slate-400 text-xs">الكاميرا مغلقة حالياً</div>
-                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700">اضغط "تشغيل الكاميرا" للبدء</div>
+                    <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-qrcode text-indigo-600"></i> ماسح كود الـ QR الفوري</h2>
+                    <p class="text-xs text-slate-500">الكاميرا تعمل تلقائياً، وجهها نحو كود الـ QR الخاص بالطالب:</p>
+                    <div id="reader" class="rounded-xl overflow-hidden border bg-black min-h-[240px]"></div>
+                    <div id="scan-feedback" class="text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700">الكاميرا جاهزة لقراءة الـ QR...</div>
                 </div>
 
                 <!-- Orders List -->
@@ -110,7 +111,6 @@
         const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
         
-        // تعريف متغير الاتصال باسم db لتجنب تضارب الأسماء مع المكتبة
         let db = null;
         try {
             if (window.supabase) {
@@ -124,11 +124,11 @@
         let orders = [];
         let currentFilter = 'all';
         let html5QrCode = null;
-        let isScanningActive = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchAllOrders();
             fetchAdminProducts();
+            startDefaultScanner(); // تشغيل الكاميرا تلقائياً فور تحميل الصفحة
 
             if (db) {
                 try {
@@ -141,13 +141,10 @@
                             fetchAllOrders();
                         })
                         .subscribe();
-                } catch(e) {
-                    console.error("Realtime subscription error:", e);
-                }
+                } catch(e) {}
             }
         });
 
-        // تشغيل إشعار صوتي فوري عند وصول طلب جديد
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -160,9 +157,7 @@
                 gainNode.connect(audioCtx.destination);
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.4);
-            } catch(e) {
-                console.log('Audio error:', e);
-            }
+            } catch(e) {}
         }
 
         function switchView(view) {
@@ -176,16 +171,40 @@
                 menuView.classList.add('hidden');
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
+                setTimeout(startDefaultScanner, 300);
             } else if (view === 'menu-manager') {
                 ordersView.classList.add('hidden');
                 menuView.classList.remove('hidden');
                 btnMenu.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-indigo-600 text-white cursor-pointer shadow";
                 btnOrders.className = "px-3 py-1.5 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 cursor-pointer shadow";
                 
-                if (isScanningActive) {
-                    stopScanner();
+                if (html5QrCode) {
+                    try { html5QrCode.stop(); } catch(e){}
                 }
                 fetchAdminProducts();
+            }
+        }
+
+        async function startDefaultScanner() {
+            const readerEl = document.getElementById('reader');
+            if (!readerEl) return;
+            
+            try {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("reader");
+                }
+                if (!html5QrCode.isScanning) {
+                    await html5QrCode.start(
+                        { facingMode: "environment" }, 
+                        { fps: 10, qrbox: { width: 200, height: 200 } }, 
+                        async (decodedText) => {
+                            await handleScannedOrder(decodedText.trim());
+                        },
+                        (errorMessage) => {}
+                    );
+                }
+            } catch (err) {
+                console.error("Auto camera start error:", err);
             }
         }
 
@@ -198,9 +217,7 @@
                     renderKitchenOrders();
                     updateSalesStats();
                 }
-            } catch(e) {
-                console.error("Fetch orders error:", e);
-            }
+            } catch(e) {}
         }
 
         function setFilter(status) {
@@ -220,10 +237,7 @@
             if (!db) return;
             try {
                 const { data, error } = await db.from('products').select('*');
-                if(error) {
-                    console.error("Error fetching products:", error);
-                    return;
-                }
+                if(error) return;
                 productsList = data || [];
                 const list = document.getElementById('admin-products-list');
                 if (productsList.length === 0) {
@@ -242,9 +256,7 @@
                         <button type="button" onclick="deleteProduct('${p.id}')" class="bg-rose-100 text-rose-600 hover:bg-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `).join('');
-            } catch(e) {
-                console.error("Admin products exception:", e);
-            }
+            } catch(e) {}
         }
 
         async function addNewProduct() {
@@ -337,70 +349,6 @@
             document.getElementById('completed-count').innerText = `${completed.length} طلب`;
         }
 
-        // تشغيل وإيقاف الكاميرا بزر صريح لتجنب التعليق
-        async function toggleScanner() {
-            if (isScanningActive) {
-                await stopScanner();
-            } else {
-                await startScanner();
-            }
-        }
-
-        async function startScanner() {
-            const readerEl = document.getElementById('reader');
-            const toggleBtn = document.getElementById('scanner-toggle-btn');
-            const feedback = document.getElementById('scan-feedback');
-
-            try {
-                readerEl.innerHTML = "";
-                if (!html5QrCode) {
-                    html5QrCode = new Html5Qrcode("reader");
-                }
-                
-                await html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    { fps: 10, qrbox: { width: 220, height: 220 } }, 
-                    async (decodedText) => {
-                        await handleScannedOrder(decodedText.trim());
-                    },
-                    (errorMessage) => {}
-                );
-
-                isScanningActive = true;
-                toggleBtn.className = "text-[11px] bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow";
-                toggleBtn.innerHTML = `<i class="fa-solid fa-power-off ml-1"></i> إيقاف الكاميرا`;
-                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
-                feedback.innerText = "الكاميرا تعمل، وجهها نحو كود الـ QR...";
-            } catch (err) {
-                console.error("Camera start error:", err);
-                isScanningActive = false;
-                toggleBtn.className = "text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow";
-                toggleBtn.innerHTML = `<i class="fa-solid fa-power-off ml-1"></i> تشغيل الكاميرا`;
-                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = "تعذر تشغيل الكاميرا (تأكد من إذن الكاميرا من المتصفح).";
-            }
-        }
-
-        async function stopScanner() {
-            const toggleBtn = document.getElementById('scanner-toggle-btn');
-            const feedback = document.getElementById('scan-feedback');
-            const readerEl = document.getElementById('reader');
-
-            if (html5QrCode && isScanningActive) {
-                try {
-                    await html5QrCode.stop();
-                } catch(e) {
-                    console.log("Stop error:", e);
-                }
-                isScanningActive = false;
-            }
-            toggleBtn.className = "text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer shadow";
-            toggleBtn.innerHTML = `<i class="fa-solid fa-power-off ml-1"></i> تشغيل الكاميرا`;
-            readerEl.innerHTML = "الكاميرا مغلقة حالياً";
-            feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-slate-100 text-slate-700";
-            feedback.innerText = "اضغط 'تشغيل الكاميرا' للبدء";
-        }
-
         async function handleScannedOrder(code) {
             const feedback = document.getElementById('scan-feedback');
             if (!db) return;
@@ -423,16 +371,11 @@
                     feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
                     feedback.innerText = `❌ كود غير صحيح أو غير موجود: (${code})`;
                 }
-            } catch(e) {
-                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-100 text-rose-800";
-                feedback.innerText = `❌ حدث خطأ أثناء التحقق من الطلب.`;
-            }
+            } catch(e) {}
 
             setTimeout(() => {
-                if(isScanningActive) {
-                    feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
-                    feedback.innerText = "الكاميرا تعمل، وجهها نحو كود الـ QR...";
-                }
+                feedback.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
+                feedback.innerText = "الكاميرا تعمل وجاهزة لقراءة الـ QR...";
             }, 3500);
         }
     </script>
