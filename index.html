@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- منع الزوم التلقائي في الموبايل بتثبيت الشاشة على مقاس العرض -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مارشال - ركن الشاورما | طلبات الطلاب</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -11,6 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { font-family: 'Tajawal', sans-serif; transition: all 0.2s ease; scroll-behavior: smooth; }
+        /* منع الزوم نهائياً بالتحكم في حجم الخط الأدنى 16px للحقول */
+        input, select, textarea { font-size: 16px !important; }
         .glass-card { background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -60,9 +63,10 @@
                 </h2>
                 <div id="cart-items" class="space-y-2 max-h-48 overflow-y-auto"><p class="text-center text-slate-400 text-xs py-3">السلة فارغة، اختر وجباتك!</p></div>
                 <div class="space-y-3 pt-3 border-t">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input type="text" id="student-name" placeholder="اسمك الكريم *" oninput="saveUserData()" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
-                        <input type="tel" id="student-phone" maxlength="11" placeholder="رقم الهاتف (11 رقم) *" oninput="saveUserData()" class="w-full text-xs p-3 rounded-xl border outline-none bg-slate-50 font-bold">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- حجم الخط 16px لمنع الزوم التلقائي عند الكتابة في الهواتف -->
+                        <input type="text" id="student-name" placeholder="اسمك الكريم *" oninput="saveUserData()" class="w-full text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
+                        <input type="tel" id="student-phone" maxlength="11" placeholder="رقم الهاتف (11 رقم) *" oninput="saveUserData()" class="w-full text-sm p-3.5 rounded-xl border outline-none bg-slate-50 font-bold">
                     </div>
                     <div class="flex justify-between items-center font-black text-slate-900 pt-1">
                         <span class="text-xs">المبلغ الإجمالي:</span>
@@ -133,24 +137,24 @@
         const SUPABASE_URL = "https://tuyauycwzjupwurmilnc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_7BS6oXx7cPu0grBF75TUpg_XQNhs-_1";
         let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let cart = [], productsList = [];
-        let selectedSandwichItem = null;
-
-        // روابط صور أقسام مضمونة 100% ومختارة بعناية فائقة لكل قسم
-        const categoryBanners = {
-            'ركن الشاورما': 'https://images.unsplash.com/photo-1561651823-34feb02255e4?w=1000&q=85',
-            'ركن الوجبات': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&q=85',
-            'ركن السندوتشات': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000&q=85',
-            'ركن البطاطس': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=1000&q=85',
-            'ركن الصوصات': 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&q=85'
-        };
+        let cart = [], productsList = [], categoryImages = {};
 
         window.addEventListener('DOMContentLoaded', () => { 
+            fetchCategoryImages();
             fetchProducts(); 
             loadStudentOrders(); 
             loadSavedUserData();
             setInterval(loadStudentOrders, 4000); 
         });
+
+        async function fetchCategoryImages() {
+            const { data } = await db.from('category_banners').select('*');
+            if(data) {
+                data.forEach(item => {
+                    categoryImages[item.category_name] = item.image_url;
+                });
+            }
+        }
 
         function saveUserData() {
             localStorage.setItem('saved_student_name', document.getElementById('student-name').value);
@@ -183,6 +187,7 @@
         }
 
         async function fetchProducts() {
+            await fetchCategoryImages();
             const container = document.getElementById('menu-sections-container');
             const { data } = await db.from('products').select('*');
             if(!data || data.length === 0) { 
@@ -198,30 +203,42 @@
                 categories[cat].push(p);
             });
 
-            container.innerHTML = Object.keys(categories).map(cat => `
-                <div id="sec-${cat}" class="space-y-4 pt-2">
-                    <div class="relative h-44 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/35">
-                        <img src="${categoryBanners[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000'}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent flex items-end p-5">
-                            <h2 class="font-black text-2xl text-white drop-shadow-lg tracking-wide">${cat}</h2>
+            // الصور الافتراضية لكل قسم في حال لم يتم تعديلها من لوحة الكاشير
+            const defaultBanners = {
+                'ركن الشاورما': 'https://images.unsplash.com/photo-1561651823-34feb02255e4?w=1000&q=85',
+                'ركن الوجبات': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&q=85',
+                'ركن السندوتشات': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000&q=85',
+                'ركن البطاطس': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=1000&q=85',
+                'ركن الصوصات': 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&q=85'
+            };
+
+            container.innerHTML = Object.keys(categories).map(cat => {
+                const bannerImg = categoryImages[cat] || defaultBanners[cat] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000';
+                return `
+                    <div id="sec-${cat}" class="space-y-4 pt-2">
+                        <div class="relative h-44 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/35">
+                            <img src="${bannerImg}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent flex items-end p-5">
+                                <h2 class="font-black text-2xl text-white drop-shadow-lg tracking-wide">${cat}</h2>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-3xl p-3 border border-slate-800 space-y-2">
+                            ${categories[cat].map(p => `
+                                <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between hover:border-amber-500/50">
+                                    <div>
+                                        <h4 class="font-bold text-slate-100 text-sm">${p.name}</h4>
+                                        <p class="text-xs text-amber-500 font-black mt-0.5">${p.price} ج.م</p>
+                                    </div>
+                                    <button type="button" onclick="handleItemClick('${p.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-4 py-2 rounded-xl shadow-md cursor-pointer active:scale-95">
+                                        <i class="fa-solid fa-plus ml-1"></i> إضافة
+                                    </button>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-
-                    <div class="bg-slate-900 rounded-3xl p-3 border border-slate-800 space-y-2">
-                        ${categories[cat].map(p => `
-                            <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between hover:border-amber-500/50">
-                                <div>
-                                    <h4 class="font-bold text-slate-100 text-sm">${p.name}</h4>
-                                    <p class="text-xs text-amber-500 font-black mt-0.5">${p.price} ج.م</p>
-                                </div>
-                                <button type="button" onclick="handleItemClick('${p.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-4 py-2 rounded-xl shadow-md cursor-pointer active:scale-95">
-                                    <i class="fa-solid fa-plus ml-1"></i> إضافة
-                                </button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function handleItemClick(id) {
@@ -329,7 +346,6 @@
             const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const itemsCopy = [...cart];
 
-            // الطلب يتم إرساله والـ QR Code سيظهر فوراً للعميل من غير انتظار الكاشير
             const { error } = await db.from('orders').insert([{ id: orderId, student_name: name, student_phone: phone, items: itemsCopy, total: total, status: 'ready' }]);
             if(error) { alert('خطأ في إرسال الطلب: ' + error.message); return; }
 
@@ -363,7 +379,6 @@
             const latestOrder = localOrders[0];
             const isCompleted = latestOrder.status === 'completed';
 
-            // الـ QR Code يظهر في أحدث طلب بشكل مباشر وواضح جداً ليمسحه الكاشير فوراً
             topContainer.innerHTML = `
                 <div class="glass-card text-slate-900 rounded-3xl p-6 shadow-2xl border-4 ${isCompleted ? 'border-slate-300 bg-slate-50/70 opacity-80' : 'border-emerald-500 bg-white'} mb-6">
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
